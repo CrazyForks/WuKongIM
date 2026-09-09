@@ -227,14 +227,21 @@ func New(cfg Config, opts ...Option) (*App, error) {
 		return nil, err
 	}
 	app.applyOptions(opts)
+	clusterCfg := defaultClusterConfig(app.cfg)
+	clusterCfg.CreatedBy = app.buildIdentity
+	clusterCfg.CreatedBy.Version = app.buildVersion
+	// Inspect freshness before a nested log directory can make the root nonempty.
+	// An injected cluster owns its own data-directory lifecycle.
+	if app.cluster == nil {
+		if err := dataformat.EnsureFresh(clusterCfg.DataDir, clusterCfg.CreatedBy, clusterCfg.Control.StateDir); err != nil {
+			return nil, err
+		}
+	}
 	app.ensureStartupConsole()
 	if err := app.ensureLogger(); err != nil {
 		return nil, err
 	}
 
-	clusterCfg := defaultClusterConfig(app.cfg)
-	clusterCfg.CreatedBy = app.buildIdentity
-	clusterCfg.CreatedBy.Version = app.buildVersion
 	clusterCfg.Logger = app.logger.Named("cluster")
 	clusterCfg.MaintenanceObserver = appMaintenanceObserver{
 		app: app, next: clusterCfg.MaintenanceObserver,
