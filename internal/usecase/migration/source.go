@@ -36,7 +36,7 @@ type Options struct {
 }
 
 // NodeOptions binds a stopped directory to an explicitly supplied node identity.
-// NodeID and SourceCommit are deployment evidence, not inferred binary versions.
+// NodeID comes from deployment configuration, not an inferred binary version.
 type NodeOptions struct {
 	Options
 	NodeID uint64 `json:"node_id"`

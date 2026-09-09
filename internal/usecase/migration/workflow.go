@@ -13,9 +13,10 @@ import (
 )
 
 // Plan binds offline inputs and the target generation before any source scan.
-// source_commit is operator-supplied deployment evidence, not binary detection.
 type Plan struct {
-	Version      int           `json:"version"`
+	Version int `json:"version"`
+	// SourceCommit pins the reader schema revision, not an identified source binary.
+	// ReadPlan normalizes an omitted or empty value before hashing or archiving.
 	SourceCommit string        `json:"source_commit"`
 	Sources      []NodeOptions `json:"sources"`
 	Target       TargetPlan    `json:"target"`
@@ -41,6 +42,8 @@ type Plan struct {
 	PluginArtifacts []PluginArtifactSpec `json:"plugin_artifacts,omitempty"`
 }
 
+// ReadPlan applies the supported reader revision before binding migration identity.
+// Explicit revision mismatches still fail; data compatibility is checked during capture.
 func ReadPlan(reader io.Reader, sourceCommit string) (plan Plan, err error) {
 	d := json.NewDecoder(io.LimitReader(reader, (1<<20)+1))
 	d.DisallowUnknownFields()
@@ -53,8 +56,11 @@ func ReadPlan(reader io.Reader, sourceCommit string) (plan Plan, err error) {
 	if plan.Version != 1 {
 		return plan, errors.New("unsupported migration plan version")
 	}
+	if plan.SourceCommit == "" {
+		plan.SourceCommit = sourceCommit
+	}
 	if plan.SourceCommit != sourceCommit {
-		return plan, errors.New("unsupported source commit; use the exact original v2 deployment revision")
+		return plan, errors.New("unsupported source commit; this tool only supports its pinned v2 schema revision")
 	}
 	if len(plan.Sources) == 0 || len(plan.Sources) > 1024 {
 		return plan, errors.New("migration plan requires complete source node directories")

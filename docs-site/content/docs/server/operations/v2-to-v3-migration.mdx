@@ -69,6 +69,8 @@ wukongim version --output json
 
 将下方示例保存为 `/srv/wkmigrate/plan.json`，按实际部署修改来源节点 ID、分片数、目标节点、地址和创建时间。单节点集群只保留一个目标节点，并把 `replicas`、`channel_replicas` 都改为 `1`；来源仍须列全。
 
+省略 `source_commit` 需要包含此改动的 `wkcli`；发布前须从包含此改动的同一源码提交构建工具和目标服务端。使用已发布工具时，采用下方说明中的旧版兼容写法。
+
 **计划中的所有路径都是迁移机上的绝对路径**。`sources` 指向汇总后的冷备，`target.nodes` 指向将在迁移机生成的目标目录；`addr` 是最终 v3 集群通信地址。工具不会通过 SSH 自动读写远端目录，也不能在各来源服务器分别执行一份计划。
 
 <details>
@@ -77,7 +79,6 @@ wukongim version --output json
 ```json
 {
   "version": 1,
-  "source_commit": "a888f89533d0e7d1b2030e06504ca97f1ad891d4",
   "sources": [
     {"node_id": 1001, "data_dir": "/srv/v2-snapshots/node1001/data", "shard_count": 8},
     {"node_id": 1002, "data_dir": "/srv/v2-snapshots/node1002/data", "shard_count": 8},
@@ -99,7 +100,9 @@ wukongim version --output json
 }
 ```
 
-`source_commit` 当前必填，必须等于示例中的提交 SHA（原版 `v2.2.5-20260422`）。省略或填写其他值会被拒绝；它是你提供的来源版本证据，不会自动识别旧二进制。`shard_count` 填原部署实际业务 DB 分片数；目标节点 ID 为 1–1023，副本数不能超过目标节点数。`slot_count` 是目标逻辑 Slot 数，示例采用 v3 默认的 `12`，须与启动配置 `cluster.initial_slot_count` 一致；迁移计划仍须显式填写，不会自动补默认值。`hash_slot_count` 是物理哈希槽数，固定为 `256`。
+`source_commit` 可省略，工具会固定使用已支持的 v2 格式读取规则，并在读取时检查数据结构、字段、索引和业务兼容性；发现不兼容仍会阻止完成。报告及归档中的 `source_commit` 表示读取规则对应的源码提交，不是对旧二进制版本的自动鉴定。已知来源属于其他版本或有自定义修改时，仍需单独评估。
+
+旧版工具（包括 v3.0.0-beta.12）仍要求在计划顶层填写 `"source_commit": "a888f89533d0e7d1b2030e06504ca97f1ad891d4"`。新工具继续接受这份旧计划，并保持相同迁移身份；显式填写其他提交仍会被拒绝。`shard_count` 填原部署实际业务 DB 分片数；目标节点 ID 为 1–1023，副本数不能超过目标节点数。`slot_count` 是目标逻辑 Slot 数，示例采用 v3 默认的 `12`，须与启动配置 `cluster.initial_slot_count` 一致；迁移计划仍须显式填写，不会自动补默认值。`hash_slot_count` 是物理哈希槽数，固定为 `256`。
 
 源、工作空间、归档和各目标目录必须互不包含。目标 `data_dir` 必须尚不存在，稍后还要部署到对应服务器的相同绝对路径。
 
