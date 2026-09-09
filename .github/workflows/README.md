@@ -26,6 +26,7 @@ authorization and the applicable budget.
 | `issue-agent.yml` | `Safety Automation - GitHub Issue Agent` | Reconciles Issue work and Review Agent repair requests |
 | `issue-agent-engineer.yml` | `Agent Tool - Issue Engineer` | Runs one exact Context Builder, Codex Engineer, and clean Verifier chain |
 | `manager-browser-smoke.yml` | `Safety Automation - Manager Browser Smoke` | Builds the production Manager bundle and runs the desktop/mobile Chromium matrix against a real three-node cluster |
+| `easy-sdk-web-docs-sync.yml` | `Safety Automation - Propose Web EasySDK Documentation Upgrade` | Checks successful Web npm publications hourly, verifies literal tutorials in Chromium, and proposes a bounded documentation PR |
 | `easysdk-release-acceptance.yml` | `Safety Automation - EasySDK Released Package Acceptance` | Resolves the pinned Android, iOS, and Flutter registry releases and proves bidirectional messaging against the current Product Gateway on hosted simulators/emulators |
 | `native-package-preview.yml` | `Safety Automation - Validate Native Package Preview` | Builds unsigned amd64 deb/rpm previews and checks non-activating transactions plus the explicit systemd lifecycle on four Linux distributions |
 | `cloud-lease-oidc-setup.yml` | `Agent Tool - Configure Cloud Lease OIDC Roles` | Reconciles and live-verifies the three workflow-conditioned Cloud Lease roles |
@@ -133,6 +134,41 @@ operations and must remain disabled until the cutover prerequisites and
 rollback snapshot in the
 [documentation CDN runbook](../../docs/superpowers/runbooks/docs-alibaba-cdn.md)
 have been verified.
+
+## Web EasySDK documentation upgrades
+
+`easy-sdk-web-docs-sync.yml` polls npm hourly at minute 17, after the SDK's
+`publish-npm.yml` succeeds. It re-reads npm integrity/gitHead, the exact SDK tag,
+main ancestry, and the successful publication run. Unchanged versions and
+existing open or closed proposals skip expensive checks; prereleases and major
+compatibility changes cannot advance the tutorial. Manual dispatch defaults to
+verifying the currently documented package without creating a PR. Set
+`verify_current=false` to discover a new compatible release. PR events validate
+only; they never reach the writer.
+
+The read-only verification job installs a locked browser toolchain and an exact
+integrity-checked npm consumer with lifecycle scripts disabled, compiles the
+literal bilingual tutorial, and runs Chromium against a real Token-authenticated
+256-hash-slot single-node cluster. It verifies bidirectional messaging, public
+online-route cleanup, reconnect and a bounded stalled WebSocket handshake.
+`bun run verify` then gates the proposed document output. Only the bounded plan
+and identity receipt are uploaded; browser logs, credentials and payloads are not.
+An Ubuntu launch probe conditionally grants user namespaces to the exact pinned
+Chromium executable through a temporary AppArmor profile. Job cleanup removes
+the profile; the browser sandbox and host-wide kernel restriction stay enabled.
+
+An isolated main-branch job receives `contents: write` and `pull-requests: write`.
+It executes only checked-out trusted control code, regenerates the three allowed
+files (SDK manifest, generated navigation and Changelog), verifies their hashes
+against the receipt, and re-reads main before creating a version-specific PR.
+It never force-pushes, approves or merges. A changed base defers to the next poll;
+failed verification leaves the current tutorial unchanged. GitHub's repository
+setting allowing Actions to create PRs must be enabled; default workflow access
+remains read-only. GITHUB_TOKEN-created PR workflows may require a maintainer to
+approve their execution. Human merge invokes the existing `docs-pages.yml`.
+
+See [the maintenance runbook](../../docs-site/scripts/easy-sdk-sync/README.md)
+for local reproduction, duplicate handling and the scope of the receipt.
 
 ## Native package preview
 

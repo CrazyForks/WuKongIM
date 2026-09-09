@@ -48,8 +48,8 @@ summary: Owns the bilingual static v3 documentation site, shared navigation, pub
    `lib/easy-sdk-releases.json` owns current versions and independent source/vcpkg pins.
    Navigation reads it directly; `lib/easy-sdk-version.ts` resolves MDX tokens in prose,
    code, links and literal attributes before HTML, search and Markdown generation.
-   Historical evidence stays literal. Selections require package compatibility review;
-   SDK release discovery and cross-repository publication are not automated here.
+   Historical evidence stays literal. The hourly `easy-sdk-web-docs-sync.yml` Web pilot
+   verifies released npm tutorials in Chromium and proposes a bounded PR; other SDKs remain manual.
 5. Removed SDK pages exist only as redirects. UniApp migration lives under the
    JavaScript advanced section; there is no standalone UniApp documentation
    group.
