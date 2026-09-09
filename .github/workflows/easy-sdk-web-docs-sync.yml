@@ -81,6 +81,8 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npx --no-install playwright install --with-deps chromium
+      - name: Probe and enable the exact Chromium sandbox executable
+        run: bash test/e2e/message/easy_sdk_docs_release/prepare-sandbox.sh
       - name: Compile the literal bilingual tutorial against the exact npm artifact
         run: node test/e2e/message/easy_sdk_docs_release/prepare.mjs "$RUNNER_TEMP/easy-sdk-plan"
       - name: Verify browser messaging and cleanup on a real single-node cluster
@@ -105,6 +107,13 @@ jobs:
             ${{ runner.temp }}/easy-sdk-plan/receipt.json
           if-no-files-found: error
           retention-days: 30
+      - name: Remove the temporary Chromium AppArmor profile
+        if: always()
+        run: |
+          if [[ -n "${EASY_SDK_CHROMIUM_PROFILE:-}" && -f "$EASY_SDK_CHROMIUM_PROFILE" ]]; then
+            sudo apparmor_parser -R "$EASY_SDK_CHROMIUM_PROFILE"
+            rm "$EASY_SDK_CHROMIUM_PROFILE"
+          fi
 
   propose:
     needs: [discover, verify]

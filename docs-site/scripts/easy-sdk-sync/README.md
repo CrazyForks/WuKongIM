@@ -24,6 +24,10 @@ requires the two languages' code to match, and compiles them against an exact
 npm consumer. The SDK lock entry must match the discovered version, tarball
 and integrity before `npm ci --ignore-scripts` runs. The browser tools have
 their own committed lockfile.
+On Ubuntu, a credential-free launch probe detects AppArmor user-namespace
+restrictions. Only if needed, the job grants `userns` to the exact pinned
+Chromium executable through a temporary profile, removed at job cleanup.
+Chromium remains sandboxed and the host-wide restriction is unchanged.
 
 The Go E2E suite starts a real 256-hash-slot single-node cluster with Token
 authentication enabled. Two isolated Chromium sessions use the tutorial's

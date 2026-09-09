@@ -153,6 +153,9 @@ literal bilingual tutorial, and runs Chromium against a real Token-authenticated
 online-route cleanup, reconnect and a bounded stalled WebSocket handshake.
 `bun run verify` then gates the proposed document output. Only the bounded plan
 and identity receipt are uploaded; browser logs, credentials and payloads are not.
+An Ubuntu launch probe conditionally grants user namespaces to the exact pinned
+Chromium executable through a temporary AppArmor profile. Job cleanup removes
+the profile; the browser sandbox and host-wide kernel restriction stay enabled.
 
 An isolated main-branch job receives `contents: write` and `pull-requests: write`.
 It executes only checked-out trusted control code, regenerates the three allowed

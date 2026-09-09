@@ -12,6 +12,9 @@ against one exact npm artifact, then runs it in Chromium against a real
 - Execute tutorial code only in the browser. Browser clients receive only their
   own BFF-issued credentials; Product HTTP provisioning and online-status checks
   stay in the Node harness. Never export credentials, payloads or raw browser logs.
+- Keep Chromium sandboxed. Ubuntu launch preflight may grant user namespaces
+  only to its exact pinned executable with a temporary AppArmor profile; remove
+  that profile at job cleanup without changing global kernel restrictions.
 - Upload only the bounded plan and receipt. A receipt names exact package,
   source, tutorial, consumer/tool lock and browser identities, and does not
   certify multi-node recovery or earlier live matrices.

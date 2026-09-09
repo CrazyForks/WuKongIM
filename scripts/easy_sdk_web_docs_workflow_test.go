@@ -62,4 +62,12 @@ func TestEasySDKWebDocsWorkflowSeparatesVerificationAndPRWriting(t *testing.T) {
 	require.Contains(t, text, "bun run verify")
 	require.Contains(t, text, "easy-sdk-plan/receipt.json")
 	require.NotContains(t, text, "server.log")
+	require.Contains(t, text, "prepare-sandbox.sh")
+	require.Contains(t, text, "sudo apparmor_parser -R")
+	sandbox := readFile(t, repoRoot(t)+"/test/e2e/message/easy_sdk_docs_release/prepare-sandbox.sh")
+	require.Contains(t, sandbox, `[[ "$result" == 78 ]]`)
+	require.Contains(t, sandbox, `"$browser_path" flags=(unconfined)`)
+	require.Contains(t, sandbox, "userns,")
+	require.NotContains(t, sandbox, "sysctl")
+	require.NotContains(t, sandbox, "--no-sandbox")
 }

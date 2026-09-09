@@ -59,8 +59,9 @@ try {
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
   const origin = `http://127.0.0.1:${server.address().port}`;
   const stalledURL = `${origin.replace('http:', 'ws:')}/stall`;
+  stage = 'browserLaunch';
+  browser = await chromium.launch({ channel: 'chromium', headless: true, chromiumSandbox: true });
   stage = 'connect';
-  browser = await chromium.launch({ headless: true, chromiumSandbox: true });
   const pages = [];
   for (const identity of identities) {
     const context = await browser.newContext();
