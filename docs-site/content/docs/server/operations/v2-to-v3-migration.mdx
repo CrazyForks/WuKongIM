@@ -1,13 +1,14 @@
 ---
 title: v2 → v3 离线迁移
-description: 使用 wkcli migrate 从未修改的 v2 停机备份生成全新 v3 集群，完成数据校验、客户端切换与回退准备。
+description: 四步完成 v2 到 v3 离线迁移：汇总冷备、填写计划、迁移校验、部署验收。
 ---
 
-`wkcli migrate` 将原版 v2 的停机数据转换为原生 v3 数据目录。**不需要修改或升级已部署的 v2**：`prepare` 在迁移机上离线读取备份，不是需要安装到 v2 的接口。
+迁移只需在一台迁移机上完成：**汇总冷备 → 填计划 → 迁移并校验 → 部署验收后切换**。原 v2 不需要修改或升级，`prepare` 直接读取停机备份。
 
-API 和 SDK 接口兼容不代表磁盘格式兼容。不要让 v3 直接打开 v2 数据目录，也不要用普通滚动升级替代迁移。
+适用于原版 `v2.2.5-20260422`，支持单节点集群、多节点集群及节点数变化。**v2 必须全部停机，v3 必须是全新空集群**；v3 不能直接打开 v2 数据目录。
 
-## 适用范围
+<details>
+<summary>版本、容量与备份要求</summary>
 
 | 项目 | 要求 |
 | --- | --- |
@@ -20,33 +21,58 @@ API 和 SDK 接口兼容不代表磁盘格式兼容。不要让 v3 直接打开 
 
 迁移机需要同时容纳完整冷备、工作空间、归档、全部目标副本和验收前快照。先用代表性数据演练并记录峰值空间与耗时；100 GiB／4 小时尚未完成性能验收，不能作为停机时长承诺。
 
-## 1. 保存冷备并准备工具
+迁移归档保留原始业务记录，但不包含全部原始 WAL 文件字节，不能代替完整文件系统冷备。保管好其中的凭据、消息和插件配置。
 
-原 v2 仍在运行时，先停止全部业务写入口，等待日志应用、拓扑变更和通知队列排空，再正常停止所有节点并关闭自动拉起。保存各节点完整数据目录、原程序、配置及环境变量。不要复制仍在写入的数据库目录。
+</details>
 
-如果已经有完整停机备份，可以直接使用，不必为运行 `prepare` 重启 v2。收集所有来源节点；工具会核对文件锁、扫描前后的文件清单和摘要。通知队列非空会阻止完成；队列为空也不能证明外部系统已经收到全部旧通知。
+## 1. 汇总冷备，安装工具
 
-<Callout type="warn" title="冷备与迁移归档都要保留">
-  迁移归档保存原始业务行、索引和迁移证据，不包含全部原始 WAL 文件字节，不能替代完整文件系统冷备。回退依赖原 v2 冷备。凭据、消息正文和插件配置都属于私有数据。
-</Callout>
+停止全部业务写入口，等待日志应用、拓扑变更和通知队列排空，再正常停止所有 v2 节点并关闭自动拉起。保存各节点完整数据目录、原程序及配置、环境变量。**已有完整停机备份可直接使用，不必重启 v2。**
 
-在已固定提交的 v3 源码目录中构建，所需 Go 版本以该提交的 `go.mod` 为准：
+选一台空间足够的迁移机，将**所有 v2 节点的冷备分别复制到这台机器**，核对文件清单与内容校验和，不合并节点目录。所有迁移命令只在这里运行一遍：
+
+| 各 v2 服务器的冷备 | 迁移机上的独立目录 |
+| --- | --- |
+| v2-a，节点 1001 | `/srv/v2-snapshots/node1001/data` |
+| v2-b，节点 1002 | `/srv/v2-snapshots/node1002/data` |
+| v2-c，节点 1003 | `/srv/v2-snapshots/node1003/data` |
+
+<details>
+<summary>多服务器：复制一个来源节点的示例</summary>
+
+在迁移机执行，替换 SSH 主机名、冷备路径和节点 ID；对其余每个来源节点重复。远端必须是完整且不再变化的冷备，接收目录必须专用于本次迁移。
+
+```sh
+mkdir -p /srv/v2-snapshots/node1001/data
+rsync -a --numeric-ids --partial root@v2-a:/srv/v2-cold-backup/data/ /srv/v2-snapshots/node1001/data/
+rsync -anc --numeric-ids --delete --itemize-changes root@v2-a:/srv/v2-cold-backup/data/ /srv/v2-snapshots/node1001/data/
+```
+
+源路径末尾的 `/` 表示复制目录内容，包含隐藏文件和完整层级。第一条 `rsync` 复制成功后再运行第二条校验；后者的 `-n` 表示只预演，`--delete` 只列出多余文件，不会删除。要求退出码 0 且无差异；否则先处理，不能开始迁移。保存核对结果，完整原冷备继续保留。
+
+传输中断可从同一份不可变冷备续传并重新校验；开始 `prepare` 后不得再向汇总目录同步文件。
+
+</details>
+
+按 [wkcli 安装](/zh/server/tools/wkcli) 获取配套的 `wkcli` 和 `wukongim`（从 v3.0.0-beta.12 起随官方包提供），核对交付摘要，再准备目录：
 
 ```sh
 umask 077
-mkdir -p /srv/tools /srv/wkmigrate/reports /srv/wkmigrate/work /srv/wkmigrate/targets
-GOWORK=off go build -o /srv/tools/wkcli ./cmd/wkcli
-GOWORK=off go build -o /srv/tools/wukongim-v3 ./cmd/wukongim
-git rev-parse HEAD > /srv/wkmigrate/reports/tool-source.txt
-sha256sum /srv/tools/wkcli /srv/tools/wukongim-v3 > /srv/wkmigrate/reports/binaries.sha256
-/srv/tools/wkcli migrate --help
+mkdir -p /srv/wkmigrate/reports /srv/wkmigrate/work /srv/wkmigrate/targets
+wkcli version --output json
+wukongim version --output json
 ```
 
-macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平台。使用交付包时，先与独立交付记录比对压缩包摘要，再校验包内文件；从 v3.0.0-beta.12 起，官方归档和原生安装包均提供两个程序，获取方式见 [wkcli 安装](/zh/server/tools/wkcli)。迁移前比较 `wkcli version --output json` 与 `wukongim version --output json`，确认版本、提交和构建来源一致。
+确认两个程序的版本、提交和构建来源一致。这里只创建父目录；不要预建 `work/prepare`、`work/import`、`work/verify`、`source-archive` 或目标节点目录。
 
-## 2. 固定迁移计划
+## 2. 填写一份 plan.json
 
-把下面的三节点示例保存为 `/srv/wkmigrate/plan.json`，替换节点、路径、地址、创建时间和实际源分片数。`source_commit` 是你提供的来源版本证据，工具不会据此自动鉴定旧二进制。
+将下方示例保存为 `/srv/wkmigrate/plan.json`，按实际部署修改来源节点 ID、分片数、目标节点、地址和创建时间。单节点集群只保留一个目标节点，并把 `replicas`、`channel_replicas` 都改为 `1`；来源仍须列全。
+
+**计划中的所有路径都是迁移机上的绝对路径**。`sources` 指向汇总后的冷备，`target.nodes` 指向将在迁移机生成的目标目录；`addr` 是最终 v3 集群通信地址。工具不会通过 SSH 自动读写远端目录，也不能在各来源服务器分别执行一份计划。
+
+<details>
+<summary>展开并复制：三节点 plan.json</summary>
 
 ```json
 {
@@ -73,12 +99,16 @@ macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平
 }
 ```
 
-- `sources[].data_dir` 指向每个来源节点的完整业务数据库目录；`shard_count` 填原部署的实际业务 DB 分片数。
-- 单节点集群只列一个目标节点，两类副本数均为 1。多节点时，副本数不能超过目标节点数；目标节点 ID 为 1–1023。
-- 使用绝对路径，源目录、工作空间、归档和各目标目录互不包含。**只创建父目录，新的工作空间及目标 `data_dir` 本身必须不存在**；预建空目录会因缺少迁移身份而被拒绝。
-- 计划一旦用于迁移，重试保持原样。改变来源、目标、策略或工具版本时，保留旧现场，使用新的工作空间、归档和全新目标重新执行。
+`source_commit` 是你提供的版本证据，不会自动识别旧二进制。`shard_count` 填原部署实际业务 DB 分片数；目标节点 ID 为 1–1023，副本数不能超过目标节点数。物理哈希槽固定为 256；逻辑 Slot 数由 `slot_count` 指定。
 
-### 先决定哪些数据迁入
+源、工作空间、归档和各目标目录必须互不包含。目标 `data_dir` 必须尚不存在，稍后还要部署到对应服务器的相同绝对路径。
+
+</details>
+
+默认严格检查业务兼容性，**不会自动启用去重或丢弃 CMD、流消息**。需要这些处理时，先展开下方策略说明并修改计划，再执行迁移。
+
+<details>
+<summary>可选：去重、排除 CMD／流消息、重新编号</summary>
 
 默认行为严格检查业务等价性，下面的处理必须显式选择，不能把某次演练的例外直接套用到另一份备份。
 
@@ -110,77 +140,93 @@ macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平
 
 重新编号后，保留消息按原顺序成为 `1…N`，新消息从 `N+1` 继续。已读和删除位置映射为旧位置之前（含该位置）仍保留的消息数量。全排除频道尾部为 0，后续从 1 开始；不会创建占位消息或更改 v3 存储格式来补空号。原历史缺洞仍会阻断。
 
-## 3. diagnose 与 prepare
+</details>
 
-先诊断冷备，使用单独的诊断工作空间：
+## 3. 执行迁移并独立校验
 
-```sh
-/srv/tools/wkcli migrate diagnose --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/diagnose \
-  > /srv/wkmigrate/reports/diagnose.json
-```
-
-退出码 1 可能表示业务阻塞或扫描不完整，先阅读报告及其完整明细。诊断成功不代表已选定权威副本，也不会生成可导入的目标。不能把诊断工作空间用于准备阶段。
-
-解决阻塞并确定计划后执行：
+在迁移机执行下面这一组命令。四个阶段依次为：检查与准备、封存源归档、生成 v3 目录、独立校验。**任一步失败即停止，先查看对应报告；目标始终保持停机。**
 
 ```sh
-/srv/tools/wkcli migrate prepare --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/prepare \
-  > /srv/wkmigrate/reports/prepare.json
+(
+  set -e
+  umask 077
+  wkcli migrate prepare --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/prepare > /srv/wkmigrate/reports/prepare.json
+  wkcli migrate export --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/prepare --archive /srv/wkmigrate/source-archive \
+    > /srv/wkmigrate/reports/export.json
+  wkcli migrate import --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/import --archive /srv/wkmigrate/source-archive \
+    > /srv/wkmigrate/reports/import.json
+  wkcli migrate verify --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/verify --archive /srv/wkmigrate/source-archive \
+    > /srv/wkmigrate/reports/verify.json
+  cat /srv/wkmigrate/reports/verify.json
+)
 ```
 
-`prepare` 会检查原始格式、索引和分片，结合持久化配置、Slot 日志及应用位置确定来源，比较正式副本，并生成转换清单。副本不一致时不会自行挑选最长 follower。此步骤不修改原 v2，也不启动或创建目标集群。
+成功时各命令退出码为 0，准备报告为 `prepared`、导入报告为 `imported`、最终报告为 **`offline_verified`**。最终的 `cutover_ready: false` 是正常结果，表示还需完成下一步的运行及客户端验收。
 
-成功要求退出码 0、`status: "prepared"`。保存捕获和选择摘要、迁入／排除计数，以及启用序号转换时的 `sequence_mapping` 文件、行数和 SHA-256。源权威、重复凭据、缺失会话或插件等阻塞应逐项处理；专项命令 `authority`、`dedupe-plan` 和捕获绑定决策详见[工程操作手册](https://github.com/WuKongIM/WuKongIM/blob/main/docs/superpowers/runbooks/v2-to-v3-migration.md)。不要删除原行、清空字段或改写证明来通过检查。
+<details>
+<summary>校验具体检查什么</summary>
 
-## 4. export：封存原始归档
+`prepare` 核对原始格式、索引和分片，结合持久化配置、Slot 日志与应用位置确定权威来源并比较正式副本；副本冲突时不会自行挑选最长 follower。它不修改 v2，也不创建目标集群。
+
+`export` 沿用成功准备的工作空间，重新确认来源未变，生成带清单、校验和及 `COMPLETE` 标记的原始归档。`import` 和 `verify` 各用独立工作空间，仅依赖计划和完整归档。
+
+`verify` 从归档原记录重新推导预期值，逐字段比较全部目标副本的凭据、权限、会话、消息、原生索引、提交边界和启动产物，不只比较数量。确认 `selection_digest` 与准备结果一致、节点数符合计划，且 `verified_message_replicas` 等于保留业务消息数 × 消息副本数。保留所有报告、摘要、迁入／排除计数和启用转换时的 `sequence_mapping` 文件及校验和。
+
+</details>
+
+<details>
+<summary>失败或中断：诊断与重试</summary>
+
+首次迁移不必单独运行 `diagnose`。需要提前盘点或调查阻塞时，使用独立诊断目录：
 
 ```sh
-/srv/tools/wkcli migrate export --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/prepare \
-  --archive /srv/wkmigrate/source-archive \
-  > /srv/wkmigrate/reports/export.json
+wkcli migrate diagnose --plan /srv/wkmigrate/plan.json \
+  --workspace /srv/wkmigrate/work/diagnose > /srv/wkmigrate/reports/diagnose.json
 ```
 
-沿用成功 `prepare` 的工作空间。导出再次检查源未变，生成分块归档、清单和 `COMPLETE` 标记。缺块、校验失败或缺少完成标记时不能导入。保存归档和序号映射后，可卸载迁移机上的源副本；完整原 v2 冷备继续保留。
+退出码 1 可能表示业务阻塞或扫描不完整；阅读报告和完整明细。诊断成功不代表权威副本已确定，诊断工作空间不能供 `prepare` 使用。通知队列非空会阻止完成；为空也不能证明外部系统收到全部旧通知。
 
-## 5. import 与 verify：目标保持停机
-
-导入和独立校验仅依赖计划及完整归档。下面分别使用全新的工作空间，使校验不依赖导入过程的临时结果：
-
-```sh
-/srv/tools/wkcli migrate import --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/import \
-  --archive /srv/wkmigrate/source-archive \
-  > /srv/wkmigrate/reports/import.json
-
-/srv/tools/wkcli migrate verify --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/verify \
-  --archive /srv/wkmigrate/source-archive \
-  > /srv/wkmigrate/reports/verify.json
-```
-
-第一版在迁移机上生成全部目标节点目录。导入成功为退出码 0、`status: "imported"`；此时仍不要启动目标。`verify` 从归档中的原记录重新推导预期值，逐字段比较全部目标副本，包括凭据、权限、会话、消息、原生索引、提交边界和启动产物，不只比较数量。
-
-| 校验结果 | 必须确认 |
-| --- | --- |
-| 退出码及状态 | 退出码 0，`status: "offline_verified"` |
-| 来源 | `selection_digest` 与本次准备结果一致 |
-| 拓扑与计数 | 节点数符合计划，`verified_message_replicas` 等于保留业务消息数 × 消息副本数 |
-| 切换状态 | `cutover_ready: false` 是正常结果，表示还需要运行和客户端验收 |
-
-首次启动前保存校验报告和完整目标快照。**启动后的库不能再作为初始导入状态重新验证或覆盖导入。**
-
-### 中断后怎么处理
+源权威、重复凭据、缺失会话及插件阻塞须逐项处理，见[工程操作手册](https://github.com/WuKongIM/WuKongIM/blob/main/docs/superpowers/runbooks/v2-to-v3-migration.md)中的 `authority`、`dedupe-plan` 和捕获绑定决策。不要删源记录、清字段或改证明绕过检查。
 
 保留计划、归档、目标和原日志。目标从未启动、计划和归档不变时，可以重跑相同 `import` 命令；已完成部分会检查指纹，不会覆盖不同代的数据。未启动目标的 `verify` 可重新完整执行。另存每次日志，避免覆盖失败证据。无迁移身份的目录会被拒绝，不要删除身份或完成标记来强行重用。
 
 若需要在隔离 Docker 环境复演整个离线流程，可使用仓库的[演练脚本与示例](https://github.com/WuKongIM/WuKongIM/tree/main/scripts/migration)。它提供只读源、独立工作空间、磁盘／时间保护及 `--dry-run`；封装脚本不会自动恢复已有输出目录，恢复前仍需按上述规则检查现场。
 
-## 6. 启动 v3 并验收
+不要直接重跑整段命令覆盖旧报告。改变来源、目标、策略或工具版本时，保留旧现场，使用新的工作空间、归档和全新目标从头迁移。
 
-将每个目标目录完整复制到对应主机，保持计划中的**相同绝对数据路径**和文件权限；不要只复制消息库，Controller 快照和迁移标记也必须保留。复制时所有目标保持停机。
+</details>
+
+## 4. 部署、验收，再切换
+
+1. **先保存完整目标快照和报告。** 将每个目标目录完整复制到对应 v3 服务器的**相同绝对路径**，核对文件清单、校验和及权限。所有目标保持停机；迁移机若就是某台目标服务器，该节点目录保留原位，只分发其他节点，不重复 `import`。
+2. 按计划配置 `wukongim.toml`，用配套 v3 程序隔离启动并验收：原 Token 登录、历史及会话已读状态、新消息序号与未读、重启恢复，以及插件和外部业务集成。写入测试使用隔离演练副本。具体配置和检查项见下方。
+3. 若重新编号，清除客户端旧消息缓存和同步游标，**保留登录凭据**，再从 v3 同步；未发送消息和草稿先单独处理。全部验收通过后再切换路由、逐步恢复流量，禁止新旧集群同时接收业务写入。
+
+**启动后的库不能重新作为初始导入状态校验或覆盖导入。** 回退到原 v2 仅适用于 v3 尚未接收新生产写入；接收后不能直接切回，否则会丢失新数据。本工具没有 v3 → v2 反向增量迁移。
+
+<details>
+<summary>多服务器：分发一个目标节点的示例</summary>
+
+在迁移机执行，替换目标主机与节点 ID；对其余目标重复。示例先检查远端目标路径不存在，避免覆盖已有数据。复制时目标不得启动。
+
+```sh
+ssh root@v3-a 'test ! -e /srv/wkmigrate/targets/node101 && test ! -L /srv/wkmigrate/targets/node101 && mkdir -p /srv/wkmigrate/targets' && \
+  rsync -a --numeric-ids --partial /srv/wkmigrate/targets/node101 root@v3-a:/srv/wkmigrate/targets/
+rsync -anc --numeric-ids --delete --itemize-changes /srv/wkmigrate/targets/node101/ root@v3-a:/srv/wkmigrate/targets/node101/
+```
+
+复制成功后再执行校验命令；`-n` 只预演、不删除文件。要求退出码 0 且无差异，保存结果后再为实际服务账号设置访问权限。必须复制整个目录，包含 Controller 快照、迁移标记和隐藏文件。文件核对不能代替第 3 步的业务校验。
+
+若传输中断，确认接收目录仅属于本次、从未启动，且迁移产物未变，再续传该目录并完整核对；不要删除或覆盖其他迁移的数据。
+
+</details>
+
+<details>
+<summary>启动配置与验收清单</summary>
 
 准备各节点的 `wukongim.toml`，保持 `node.id`、`node.data_dir`、`cluster.id`、`cluster.nodes`、`cluster.initial_slot_count`、`cluster.hash_slot_count`、`cluster.slot_replica_n` 和 `cluster.channel_replica_n` 与计划一致。TLS、监听／公布地址、网关认证、Webhook 地址与网络保护、插件及业务后端配置须另行核对，数据库导入不会替你搬运或验证这些配置。原生 Webhook 不提供签名；若业务使用外部签名代理，单独迁移并验证代理配置。参考[集群配置](/zh/server/configuration/cluster)和[安全配置](/zh/server/configuration/security)。
 
@@ -195,14 +241,17 @@ macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平
 
 写入测试使用隔离演练副本。API 检查不能代替 SDK 登录、真实界面和外部业务集成验收。[聊天 Demo](/zh/guide/quick-start/chat-demo) 支持使用已有 Token 验收，不应创建或覆盖原凭据。
 
-## 7. 客户端切换与回退边界
+</details>
+
+<details>
+<summary>客户端映射与回退细节</summary>
 
 重新编号会使旧消息缓存和旧序号游标失效。采用清缓存方案时，按迁移代次清除客户端历史消息副本和派生同步游标，**保留登录凭据**，再从 v3 同步会话与历史。清理前单独处理未发送消息和草稿，避免把待发送队列误删或重复发送。服务端导入不会自动清理业务 App 的数据库。
 
 若客户端采用映射方案，必须处理完整 `sequence_mapping`：被排除行的 `target_seq` 为 0，旧游标映射应使用 `boundary_seq`，不能当成仍存在的消息。可用 `export-map` 从归档重建映射：
 
 ```sh
-/srv/tools/wkcli migrate export-map --plan /srv/wkmigrate/plan.json \
+wkcli migrate export-map --plan /srv/wkmigrate/plan.json \
   --workspace /srv/wkmigrate/work/map \
   --archive /srv/wkmigrate/source-archive
 ```
@@ -215,3 +264,5 @@ macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平
 | v3 已接收新生产写入 | 不能直接切回旧 v2，否则会丢失新增数据；保留新库，按已验证的 v3 修复或备份恢复方案处理 |
 
 第一版没有 v3 → v2 反向增量迁移。回退演练应使用备份副本，不能破坏保留的原冷备。固定版本的完整迁移和重启测试记录见[交付包验收报告](https://github.com/WuKongIM/WuKongIM/blob/main/docs/superpowers/reports/2026-09-09-v2-migration-delivered-package-rehearsal.md)；其功能结果不等于你的性能、插件或生产切换验收。
+
+</details>

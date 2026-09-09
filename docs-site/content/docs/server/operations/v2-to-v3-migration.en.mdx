@@ -1,13 +1,14 @@
 ---
 title: v2 → v3 Offline Migration
-description: Use wkcli migrate to build a new v3 cluster from unmodified, stopped v2 backups, verify the data, and prepare client cutover and rollback.
+description: "Migrate from v2 to v3 in four steps: collect cold backups, fill in the plan, migrate and verify, then deploy and test."
 ---
 
-`wkcli migrate` converts stopped original v2 data into native v3 data directories. **You do not need to modify or upgrade the deployed v2**: `prepare` reads backups offline on the migration machine; it is not an endpoint installed in v2.
+Run the migration on one machine: **collect cold backups → fill in the plan → migrate and verify → deploy, test, and cut over**. You do not need to modify or upgrade v2: `prepare` reads stopped backups directly.
 
-API and SDK compatibility does not imply disk-format compatibility. Do not let v3 open a v2 data directory or replace this migration with a rolling upgrade.
+This guide supports original `v2.2.5-20260422`, single-node and multi-node clusters, and changes in node count. **All v2 nodes must be stopped, and v3 must be a new, empty cluster.** Never let v3 open a v2 data directory.
 
-## Supported scope
+<details>
+<summary>Version, capacity, and backup requirements</summary>
 
 | Item | Requirement |
 | --- | --- |
@@ -20,33 +21,58 @@ API and SDK compatibility does not imply disk-format compatibility. Do not let v
 
 The migration machine needs space for full cold backups, workspaces, the archive, every target replica, and snapshots taken before acceptance testing. Rehearse with representative data and record peak space and elapsed time. The 100 GiB / four-hour performance target has not been validated and is not a downtime guarantee.
 
-## 1. Preserve cold backups and prepare the tool
+The migration archive preserves original business records, but not every original WAL byte. It cannot replace a full filesystem cold backup. Protect the credentials, messages, and plugin configuration it contains.
 
-If original v2 is running, stop every business write entrypoint, let log application, topology changes, and notification queues drain, then shut down all nodes normally and disable automatic restarts. Preserve complete node data directories, original binaries, configuration, and environment variables. Do not copy a database directory while it is being written.
+</details>
 
-An existing complete stopped backup can be used directly; do not restart v2 just to run `prepare`. Collect every source node. The tool checks file locks and compares file inventories and digests before and after scanning. A nonempty notification queue blocks completion; an empty queue does not prove that external systems received every old notification.
+## 1. Collect backups and install the tools
 
-<Callout type="warn" title="Keep both cold backups and the migration archive">
-  The migration archive contains original business rows, indexes, and migration evidence, but not every byte of the original WAL files. It cannot replace a full filesystem cold backup. Rollback depends on the original v2 backup. Credentials, message payloads, and plugin configuration are private data.
-</Callout>
+Stop all business write entrypoints, let log application, topology changes, and notification queues drain, then shut down every v2 node normally and disable automatic restarts. Preserve complete node data directories, original binaries, configuration, and environment variables. **An existing complete stopped backup can be used directly; do not restart v2.**
 
-Build inside the fixed v3 source checkout. Use the Go version required by its `go.mod`:
+Choose a migration machine with enough space. **Copy every v2 node's cold backup into a separate directory on that machine**, and compare file inventories and content checksums. Do not merge node directories. Run the migration commands once, on this machine only:
+
+| Cold backup on each v2 server | Separate directory on the migration machine |
+| --- | --- |
+| v2-a, node 1001 | `/srv/v2-snapshots/node1001/data` |
+| v2-b, node 1002 | `/srv/v2-snapshots/node1002/data` |
+| v2-c, node 1003 | `/srv/v2-snapshots/node1003/data` |
+
+<details>
+<summary>Multiple servers: copy one source node</summary>
+
+Run on the migration machine, replacing the SSH hostname, backup path, and node ID. Repeat for every other source node. Remote backups must be complete and immutable; receiving directories must belong exclusively to this attempt.
+
+```sh
+mkdir -p /srv/v2-snapshots/node1001/data
+rsync -a --numeric-ids --partial root@v2-a:/srv/v2-cold-backup/data/ /srv/v2-snapshots/node1001/data/
+rsync -anc --numeric-ids --delete --itemize-changes root@v2-a:/srv/v2-cold-backup/data/ /srv/v2-snapshots/node1001/data/
+```
+
+The trailing `/` on the source copies directory contents, including hidden files and the full hierarchy. After the first `rsync` succeeds, run the second to verify. Its `-n` means dry run; `--delete` only lists extra files and deletes nothing. Require exit code 0 and no differences before migration. Save the results and retain the original full backups.
+
+Interrupted copies may resume from the same immutable backup, followed by full verification. Once `prepare` starts, do not sync more files into the collected sources.
+
+</details>
+
+Follow [wkcli installation](/en/server/tools/wkcli) to obtain matching `wkcli` and `wukongim` binaries (included in official packages since v3.0.0-beta.12). Verify the delivery digests, then prepare directories:
 
 ```sh
 umask 077
-mkdir -p /srv/tools /srv/wkmigrate/reports /srv/wkmigrate/work /srv/wkmigrate/targets
-GOWORK=off go build -o /srv/tools/wkcli ./cmd/wkcli
-GOWORK=off go build -o /srv/tools/wukongim-v3 ./cmd/wukongim
-git rev-parse HEAD > /srv/wkmigrate/reports/tool-source.txt
-sha256sum /srv/tools/wkcli /srv/tools/wukongim-v3 > /srv/wkmigrate/reports/binaries.sha256
-/srv/tools/wkcli migrate --help
+mkdir -p /srv/wkmigrate/reports /srv/wkmigrate/work /srv/wkmigrate/targets
+wkcli version --output json
+wukongim version --output json
 ```
 
-On macOS, use `shasum -a 256` instead of `sha256sum`. Build for the actual runtime platform. For a delivery package, compare its archive digest with an independent delivery record before checking the enclosed files. Since v3.0.0-beta.12, official archives and native packages include both binaries; see [wkcli installation](/en/server/tools/wkcli). Compare `wkcli version --output json` with `wukongim version --output json`: version, commit, and build source must match before migration.
+Confirm that both binaries have the same version, commit, and build source. Create only parent directories here. Do not precreate `work/prepare`, `work/import`, `work/verify`, `source-archive`, or target node directories.
 
-## 2. Freeze the migration plan
+## 2. Fill in one plan.json
 
-Save this three-node example as `/srv/wkmigrate/plan.json`. Replace the nodes, paths, addresses, creation time, and actual source shard counts. `source_commit` is version evidence supplied by you; it does not automatically identify the old binary.
+Save the example below as `/srv/wkmigrate/plan.json`. Adjust source node IDs, shard counts, target nodes, addresses, and creation time. For a single-node cluster, keep one target node and set both `replicas` and `channel_replicas` to `1`; still include every source node.
+
+**Every path in the plan is an absolute path on the migration machine.** `sources` points to collected backups; `target.nodes` points to directories that will be generated on that machine. `addr` is the final v3 cluster communication address. The tool does not access remote directories over SSH, and you must not run separate plans on individual source servers.
+
+<details>
+<summary>Expand and copy: three-node plan.json</summary>
 
 ```json
 {
@@ -73,12 +99,16 @@ Save this three-node example as `/srv/wkmigrate/plan.json`. Replace the nodes, p
 }
 ```
 
-- Each `sources[].data_dir` points to the complete business database directory of one source node. Set `shard_count` to the actual business DB shard count in that deployment.
-- For a single-node cluster, list one target node and set both replica counts to 1. Otherwise, replica counts cannot exceed the target node count. Target node IDs are 1–1023.
-- Use absolute paths. Source directories, workspaces, the archive, and target directories must not contain one another. **Create only their parents: new workspaces and target `data_dir` directories must not exist.** Precreated empty directories are rejected because they lack migration identity.
-- Keep the plan unchanged on retries. When changing sources, targets, policies, or tool versions, preserve the old attempt and start again with new workspaces, a new archive, and new targets.
+`source_commit` is version evidence supplied by you, not automatic identification of the old binary. Set `shard_count` to the actual original business DB shard count. Target node IDs are 1–1023; replica counts cannot exceed the target node count. Physical hash slots are fixed at 256; `slot_count` sets logical Slots.
 
-### Decide which data to import
+Source directories, workspaces, the archive, and target directories must not contain one another. Target `data_dir` directories must not exist yet, and must later be deployed at the same absolute paths on their respective servers.
+
+</details>
+
+By default, business compatibility is checked strictly; **deduplication and CMD/stream omissions are not enabled automatically**. If needed, read the policy details below and update the plan before migration.
+
+<details>
+<summary>Optional: deduplication, CMD/stream exclusions, and renumbering</summary>
 
 The default checks business equivalence strictly. The following policies require explicit decisions; exceptions from one rehearsal must not be copied into another backup's plan without assessment.
 
@@ -110,77 +140,93 @@ If the business owner decides to omit CMD and entire stream messages, deduplicat
 
 After renumbering, retained messages become `1…N` in their original order, and new messages continue at `N+1`. Read and deletion positions map to the number of retained messages at or before the old position. A channel with every message excluded has tail 0 and starts new messages at 1. The tool does not create placeholders or change v3 storage to fill gaps. Gaps already present in source history still block completion.
 
-## 3. Run diagnose and prepare
+</details>
 
-Diagnose the cold backups in a separate workspace:
+## 3. Migrate and independently verify
 
-```sh
-/srv/tools/wkcli migrate diagnose --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/diagnose \
-  > /srv/wkmigrate/reports/diagnose.json
-```
-
-Exit code 1 can indicate business blockers or an incomplete scan. Read the report and its full details first. Successful diagnosis does not select authoritative replicas or generate an importable target. Do not reuse the diagnosis workspace for preparation.
-
-After resolving blockers and fixing the plan, run:
+Run this command block on the migration machine. The four stages check and prepare data, seal the source archive, generate v3 directories, and independently verify them. **A failed command stops the block: read its report before continuing. Keep all targets stopped.**
 
 ```sh
-/srv/tools/wkcli migrate prepare --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/prepare \
-  > /srv/wkmigrate/reports/prepare.json
+(
+  set -e
+  umask 077
+  wkcli migrate prepare --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/prepare > /srv/wkmigrate/reports/prepare.json
+  wkcli migrate export --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/prepare --archive /srv/wkmigrate/source-archive \
+    > /srv/wkmigrate/reports/export.json
+  wkcli migrate import --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/import --archive /srv/wkmigrate/source-archive \
+    > /srv/wkmigrate/reports/import.json
+  wkcli migrate verify --plan /srv/wkmigrate/plan.json \
+    --workspace /srv/wkmigrate/work/verify --archive /srv/wkmigrate/source-archive \
+    > /srv/wkmigrate/reports/verify.json
+  cat /srv/wkmigrate/reports/verify.json
+)
 ```
 
-`prepare` checks original formats, indexes, and shards; uses durable configuration, Slot logs, and applied positions to determine sources; compares official replicas; and builds a conversion manifest. It does not choose the longest follower when replicas disagree. This step neither changes original v2 data nor starts or creates the target cluster.
+Each command must exit with code 0. The preparation report must say `prepared`, the import report `imported`, and the final report **`offline_verified`**. A final `cutover_ready: false` is expected: runtime and client acceptance still belong to the next step.
 
-Success requires exit code 0 and `status: "prepared"`. Save the capture and selection digests, import/exclusion counts, and, when sequence conversion is enabled, the `sequence_mapping` file, row count, and SHA-256. Resolve authority, duplicate credential, missing conversation, and plugin blockers individually. See the [engineering runbook](https://github.com/WuKongIM/WuKongIM/blob/main/docs/superpowers/runbooks/v2-to-v3-migration.md) for `authority`, `dedupe-plan`, and decisions bound to an exact capture. Do not delete source rows, clear fields, or rewrite proofs to pass checks.
+<details>
+<summary>What verification checks</summary>
 
-## 4. Export the original archive
+`prepare` checks original formats, indexes, and shards. It uses durable configuration, Slot logs, and applied positions to establish authoritative sources and compare official replicas. It does not choose the longest follower when replicas conflict, modify v2, or create the target cluster.
+
+`export` reuses the successful preparation workspace, rechecks unchanged sources, and produces an original archive with a manifest, checksums, and a `COMPLETE` marker. `import` and `verify` use separate workspaces and depend only on the plan and complete archive.
+
+`verify` independently derives expected values from original archived records. It compares credentials, permissions, conversations, messages, native indexes, commit boundaries, and bootstrap artifacts in every target replica, field by field, not just counts. Confirm that `selection_digest` matches preparation, node counts match the plan, and `verified_message_replicas` equals retained business messages × message replica count. Keep every report, digest, import/exclusion count, and any `sequence_mapping` file and checksums.
+
+</details>
+
+<details>
+<summary>Failures and interruptions: diagnosis and retries</summary>
+
+A separate `diagnose` command is not required for the first migration. To inventory issues beforehand or investigate a blocker, use a separate diagnostic directory:
 
 ```sh
-/srv/tools/wkcli migrate export --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/prepare \
-  --archive /srv/wkmigrate/source-archive \
-  > /srv/wkmigrate/reports/export.json
+wkcli migrate diagnose --plan /srv/wkmigrate/plan.json \
+  --workspace /srv/wkmigrate/work/diagnose > /srv/wkmigrate/reports/diagnose.json
 ```
 
-Reuse the successful `prepare` workspace. Export rechecks that sources are unchanged and produces archive chunks, a manifest, and a `COMPLETE` marker. Missing chunks, checksum failures, or a missing completion marker prevent import. Once the archive and sequence map are preserved, source copies can be unmounted from the migration machine. Keep the complete original v2 cold backups.
+Exit code 1 may indicate business blockers or an incomplete scan; read the report and full findings. Successful diagnosis does not establish authoritative replicas, and its workspace cannot be used for `prepare`. Nonempty notification queues block completion; empty queues do not prove external receipt of every old notification.
 
-## 5. Import and verify with targets stopped
-
-Import and independent verification require only the plan and complete archive. Use separate new workspaces so verification does not depend on temporary import results:
-
-```sh
-/srv/tools/wkcli migrate import --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/import \
-  --archive /srv/wkmigrate/source-archive \
-  > /srv/wkmigrate/reports/import.json
-
-/srv/tools/wkcli migrate verify --plan /srv/wkmigrate/plan.json \
-  --workspace /srv/wkmigrate/work/verify \
-  --archive /srv/wkmigrate/source-archive \
-  > /srv/wkmigrate/reports/verify.json
-```
-
-This version generates every target node directory on the migration machine. Import success means exit code 0 and `status: "imported"`; do not start targets yet. `verify` independently derives expected values from original archived records and compares every target replica field by field, including credentials, permissions, conversations, messages, native indexes, commit boundaries, and bootstrap artifacts. It checks more than counts.
-
-| Verification result | Required check |
-| --- | --- |
-| Exit code and status | Exit code 0, `status: "offline_verified"` |
-| Source | `selection_digest` matches this preparation result |
-| Topology and counts | Node count matches the plan; `verified_message_replicas` equals retained business messages × message replica count |
-| Cutover state | `cutover_ready: false` is expected: runtime and client acceptance are still required |
-
-Preserve the verification report and complete target snapshots before first startup. **Once started, databases cannot be verified as initial import state or overwritten by another import.**
-
-### Recovering an interrupted attempt
+Resolve authority, duplicate credential, missing conversation, and plugin blockers individually. See `authority`, `dedupe-plan`, and capture-bound decisions in the [engineering runbook](https://github.com/WuKongIM/WuKongIM/blob/main/docs/superpowers/runbooks/v2-to-v3-migration.md). Do not delete source rows, clear fields, or rewrite proofs to bypass checks.
 
 Keep the plan, archive, targets, and original logs. If targets have never started and the plan and archive are unchanged, rerun the same `import` command. Completed portions are fingerprint-checked; data from a different migration generation is not overwritten. Verification of unstarted targets can be rerun in full. Save each attempt's logs separately. Directories without migration identity are rejected; do not remove identity or completion markers to force reuse.
 
 To rehearse the full offline flow in isolated Docker containers, use the repository's [rehearsal scripts and examples](https://github.com/WuKongIM/WuKongIM/tree/main/scripts/migration). They provide read-only sources, separate workspaces, disk/time guards, and `--dry-run`. The wrapper does not automatically resume an existing output directory; inspect the attempt under the rules above before recovery.
 
-## 6. Start v3 and run acceptance tests
+Do not rerun the entire block and overwrite old reports. When changing sources, targets, policies, or tool versions, preserve the old attempt and restart with new workspaces, a new archive, and entirely new targets.
 
-Copy each complete target directory to its corresponding host, preserving the **same absolute data path** specified in the plan and file permissions. Include Controller snapshots and migration markers, not just message databases. Keep all targets stopped during copying.
+</details>
+
+## 4. Deploy, test, and cut over
+
+1. **Preserve complete target snapshots and reports first.** Copy each full target directory to the corresponding v3 server at the **same absolute path**; compare file inventories, checksums, and permissions. Keep every target stopped. If the migration machine is also a target server, leave that node's directory in place and distribute only the others. Do not repeat `import`.
+2. Configure `wukongim.toml` according to the plan. Start matching v3 binaries in isolation and test original-token login, history and conversation read state, new sequences and unread counts, restart recovery, plugins, and external integrations. Run write tests on isolated rehearsal copies. Configuration and acceptance details are below.
+3. If sequences were renumbered, clear old client message caches and sync cursors, **preserve login credentials**, and resync from v3. Handle unsent messages and drafts separately first. Switch routing and gradually restore traffic only after all acceptance checks pass. Never allow both generations to accept business writes simultaneously.
+
+**Started databases cannot be verified as initial import state or overwritten by another import.** Returning to original v2 is possible only before v3 accepts new production writes. Switching back afterward would lose new data; this tool has no reverse incremental v3 → v2 migration.
+
+<details>
+<summary>Multiple servers: distribute one target node</summary>
+
+Run on the migration machine, replacing the target hostname and node ID. Repeat for the other targets. The example checks that the remote target path does not exist before copying, to avoid overwriting existing data. Keep the target stopped.
+
+```sh
+ssh root@v3-a 'test ! -e /srv/wkmigrate/targets/node101 && test ! -L /srv/wkmigrate/targets/node101 && mkdir -p /srv/wkmigrate/targets' && \
+  rsync -a --numeric-ids --partial /srv/wkmigrate/targets/node101 root@v3-a:/srv/wkmigrate/targets/
+rsync -anc --numeric-ids --delete --itemize-changes /srv/wkmigrate/targets/node101/ root@v3-a:/srv/wkmigrate/targets/node101/
+```
+
+After the copy succeeds, run verification. `-n` is a dry run and deletes nothing. Require exit code 0 and no differences, save the results, then grant access to the actual service account. Copy the entire directory, including Controller snapshots, migration markers, and hidden files. File comparison does not replace business verification in step 3.
+
+If copying is interrupted, confirm that the receiving directory belongs only to this attempt, has never started, and the migration output is unchanged. Then resume that copy and verify it in full; never delete or overwrite another migration's data.
+
+</details>
+
+<details>
+<summary>Startup configuration and acceptance checklist</summary>
 
 Prepare each node's `wukongim.toml`. Match `node.id`, `node.data_dir`, `cluster.id`, `cluster.nodes`, `cluster.initial_slot_count`, `cluster.hash_slot_count`, `cluster.slot_replica_n`, and `cluster.channel_replica_n` to the plan. Separately check TLS, listening/advertised addresses, gateway authentication, Webhook endpoints and network protections, plugins, and business backend configuration. Database import does not transfer or validate those settings. Native Webhooks do not provide signatures; if your business uses an external signing proxy, migrate and validate that configuration separately. See [Cluster Configuration](/en/server/configuration/cluster) and [Security Configuration](/en/server/configuration/security).
 
@@ -195,14 +241,17 @@ Start all targets in isolation using the matching v3 server, without production 
 
 Run write tests against isolated rehearsal copies. API checks do not replace SDK login, actual UI, and external integration acceptance. The [Chat Demo](/en/guide/quick-start/chat-demo) supports testing with existing tokens; do not create or overwrite original credentials.
 
-## 7. Client cutover and rollback boundaries
+</details>
+
+<details>
+<summary>Client mapping and rollback details</summary>
 
 Renumbering invalidates old message caches and sequence cursors. For a cache-reset cutover, clear client history copies and derived sync cursors by migration generation, **preserve login credentials**, then sync conversations and history from v3. Handle unsent messages and drafts separately before clearing caches to avoid deleting or resending pending work. Server import does not clear the business App's database.
 
 If clients use a mapping instead, they must handle the complete `sequence_mapping`. Excluded rows have `target_seq` 0; use `boundary_seq` for old cursors rather than treating excluded rows as existing messages. Rebuild the mapping from the archive with:
 
 ```sh
-/srv/tools/wkcli migrate export-map --plan /srv/wkmigrate/plan.json \
+wkcli migrate export-map --plan /srv/wkmigrate/plan.json \
   --workspace /srv/wkmigrate/work/map \
   --archive /srv/wkmigrate/source-archive
 ```
@@ -215,3 +264,5 @@ After all reports, runtime tests, and client acceptance pass, operators can swit
 | After v3 accepts new production writes | Do not switch directly to old v2: new data would be lost. Preserve the new databases and use a validated v3 repair or backup recovery procedure |
 
 This version has no reverse incremental v3 → v2 migration. Rehearse rollback with backup copies without damaging original cold backups. See the [delivery package acceptance report](https://github.com/WuKongIM/WuKongIM/blob/main/docs/superpowers/reports/2026-09-09-v2-migration-delivered-package-rehearsal.md) for a fixed-version migration and restart test. Its functional results do not certify your performance, plugins, or production cutover.
+
+</details>
