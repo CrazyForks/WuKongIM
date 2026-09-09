@@ -12,6 +12,7 @@ import (
 	"github.com/WuKongIM/WuKongIM/pkg/channel/worker"
 	"github.com/WuKongIM/WuKongIM/pkg/cluster/control"
 	controller "github.com/WuKongIM/WuKongIM/pkg/controller"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	messagedb "github.com/WuKongIM/WuKongIM/pkg/db/message"
 	gorutine "github.com/WuKongIM/WuKongIM/pkg/goroutine"
 	"github.com/WuKongIM/WuKongIM/pkg/slot/multiraft"
@@ -33,6 +34,8 @@ type Config struct {
 	ListenAddr string
 	// DataDir is the root directory for cluster data files.
 	DataDir string
+	// CreatedBy records the initializing binary; it is not user configuration.
+	CreatedBy dataformat.Build
 	// Control contains Controller adapter configuration.
 	Control ControlConfig
 	// Join contains dynamic data-node join bootstrap settings.

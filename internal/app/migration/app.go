@@ -15,11 +15,17 @@ import (
 	"github.com/WuKongIM/WuKongIM/internal/infra/migrationv2"
 	"github.com/WuKongIM/WuKongIM/internal/infra/migrationv3"
 	usecase "github.com/WuKongIM/WuKongIM/internal/usecase/migration"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/db/transfer"
 )
 
 // Run wires original source decoding, immutable scratch storage and archives.
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	return RunWithBuild(ctx, args, stdout, stderr, dataformat.Build{})
+}
+
+// RunWithBuild binds creator provenance only when installing a new generation.
+func RunWithBuild(ctx context.Context, args []string, stdout, stderr io.Writer, build dataformat.Build) int {
 	return migratecli.Run(ctx, args, stdout, stderr, func(ctx context.Context, cmd migratecli.Command) (result any, err error) {
 		f, err := os.Open(cmd.PlanPath)
 		if err != nil {
@@ -104,7 +110,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 				verified.PluginArtifacts = &artifacts
 				return verified, nil
 			}
-			if err := migrationv3.Install(ctx, plan.Target, prepared.Conversion, w, migrationv3.InstallOptions{PluginSettings: prepared.PluginSettings, PluginArtifacts: prepared.PluginArtifacts}); err != nil {
+			if err := migrationv3.Install(ctx, plan.Target, prepared.Conversion, w, migrationv3.InstallOptions{CreatedBy: build, PluginSettings: prepared.PluginSettings, PluginArtifacts: prepared.PluginArtifacts}); err != nil {
 				return nil, err
 			}
 			return struct {

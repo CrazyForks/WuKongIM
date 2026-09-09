@@ -12,6 +12,7 @@ import (
 	migrationapp "github.com/WuKongIM/WuKongIM/internal/app/migration"
 	"github.com/WuKongIM/WuKongIM/internal/infra/migrationv2"
 	"github.com/WuKongIM/WuKongIM/internal/usecase/migration"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +35,7 @@ func TestMigrationCLIProcessesSyntheticCompatibleSource(t *testing.T) {
 	run := func(args ...string) int {
 		output.Reset()
 		diagnostics.Reset()
-		return migrationapp.Run(context.Background(), args, &output, &diagnostics)
+		return migrationapp.RunWithBuild(context.Background(), args, &output, &diagnostics, dataformat.Build{Program: "wkcli", Version: "test-v3", Commit: "test-commit", BuildSource: "source"})
 	}
 	base := []string{"--plan", planPath, "--workspace", filepath.Join(dir, "workspace")}
 	require.Equal(t, 0, run(append([]string{"prepare"}, base...)...), diagnostics.String())
@@ -61,12 +62,29 @@ func TestMigrationCLIProcessesSyntheticCompatibleSource(t *testing.T) {
 	require.NoError(t, os.Rename(source, source+"-unmounted"))
 	portable := []string{"--plan", planPath, "--workspace", filepath.Join(dir, "import-workspace"), "--archive", filepath.Join(dir, "archive")}
 	require.Equal(t, 0, run(append([]string{"import"}, portable...)...), diagnostics.String())
+	identity, err := dataformat.Inspect(plan.Target.Nodes[0].DataDir)
+	require.NoError(t, err)
+	require.Equal(t, "registered", identity.Status)
+	require.Equal(t, "test-commit", identity.Metadata.CreatedBy.Commit)
+	before, err := os.ReadFile(filepath.Join(plan.Target.Nodes[0].DataDir, dataformat.FileName))
+	require.NoError(t, err)
+	require.Equal(t, 0, run(append([]string{"import"}, portable...)...), diagnostics.String())
+	after, err := os.ReadFile(filepath.Join(plan.Target.Nodes[0].DataDir, dataformat.FileName))
+	require.NoError(t, err)
+	require.Equal(t, before, after)
 	portable[3] = filepath.Join(dir, "verify-workspace")
 	require.Equal(t, 0, run(append([]string{"verify"}, portable...)...), diagnostics.String())
 	var verified migration.VerificationReport
 	require.NoError(t, json.Unmarshal(output.Bytes(), &verified))
 	require.Equal(t, "offline_verified", verified.Status)
 	require.Equal(t, uint64(4), verified.Messages)
+	// Creation identity belongs to the immutable migration checkpoint; removing
+	// it cannot turn a new generation into an accepted legacy unregistered one.
+	require.NoError(t, os.Remove(filepath.Join(plan.Target.Nodes[0].DataDir, dataformat.FileName)))
+	require.NotZero(t, run(append([]string{"verify"}, portable...)...))
+	require.Contains(t, diagnostics.String(), "changed")
+	require.NoError(t, os.WriteFile(filepath.Join(plan.Target.Nodes[0].DataDir, dataformat.FileName), before, 0600))
+
 	require.False(t, verified.CutoverReady)
 	plan.SourceCommit = "0000000000000000000000000000000000000000"
 	data, err = json.Marshal(plan)

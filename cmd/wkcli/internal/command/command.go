@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +17,8 @@ const (
 
 // Deps carries process dependencies that every subcommand can reuse.
 type Deps struct {
+	// Build identifies the executable that creates offline data generations.
+	Build dataformat.Build
 	// Stdin supplies interactive database queries.
 	Stdin io.Reader
 	// Stdout receives normal command output and help text.

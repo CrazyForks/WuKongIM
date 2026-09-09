@@ -23,7 +23,7 @@ second implementation of those layers.
 ## Main Flows
 
 ```text
-validated Config
+validated Config + build identity -> fresh-directory creation provenance
   -> construct cluster and shared runtime foundations
   -> construct use cases and infrastructure ports
   -> bind the user use case's durable device-token verifier into Gateway CONNECT authentication

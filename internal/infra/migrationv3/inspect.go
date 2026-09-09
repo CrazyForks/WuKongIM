@@ -18,6 +18,7 @@ import (
 	"github.com/WuKongIM/WuKongIM/pkg/controller/raft/raftstore"
 	"github.com/WuKongIM/WuKongIM/pkg/controller/state"
 	"github.com/WuKongIM/WuKongIM/pkg/controller/statefile"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/db/inspect"
 	"github.com/WuKongIM/WuKongIM/pkg/db/message"
 	"github.com/WuKongIM/WuKongIM/pkg/db/message/channelcompat"
@@ -59,6 +60,9 @@ func (Inspector) Open(ctx context.Context, plan migration.TargetPlan, node migra
 	}()
 	v.layout, err = newLayout(ctx, plan)
 	if err != nil {
+		return nil, err
+	}
+	if err := dataformat.Check(node.DataDir); err != nil {
 		return nil, err
 	}
 	seal, found, err := cluster.ReadOfflineImportSeal(node.DataDir)

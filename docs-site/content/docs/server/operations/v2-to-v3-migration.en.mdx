@@ -222,7 +222,7 @@ ssh root@v3-a 'test ! -e /srv/wkmigrate/targets/node101 && test ! -L /srv/wkmigr
 rsync -anc --numeric-ids --delete --itemize-changes /srv/wkmigrate/targets/node101/ root@v3-a:/srv/wkmigrate/targets/node101/
 ```
 
-After the copy succeeds, run verification. `-n` is a dry run and deletes nothing. Require exit code 0 and no differences, save the results, then grant access to the actual service account. Copy the entire directory, including Controller snapshots, migration markers, and hidden files. File comparison does not replace business verification in step 3.
+After the copy succeeds, run verification. `-n` is a dry run and deletes nothing. Require exit code 0 and no differences, save the results, then grant access to the actual service account. Copy the entire directory, including Controller snapshots, migration markers, `DATA-FORMAT.json` when present, and hidden files. Inspect format and creator with [wkcli db info](/en/server/tools/wkdb#inspect-the-data-version); older outputs without a marker remain unregistered. File comparison does not replace business verification in step 3.
 
 If copying is interrupted, confirm that the receiving directory belongs only to this attempt, has never started, and the migration output is unchanged. Then resume that copy and verify it in full; never delete or overwrite another migration's data.
 

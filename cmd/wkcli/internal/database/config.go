@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/db"
 	"github.com/WuKongIM/WuKongIM/pkg/db/inspect"
 	"github.com/pelletier/go-toml/v2"
@@ -19,6 +20,8 @@ const (
 
 // cliFlags contains values parsed from wkdb command-line flags.
 type cliFlags struct {
+	// createdBy is executable provenance injected by the command composition.
+	createdBy dataformat.Build
 	// configPath points to a wukongim.toml file.
 	configPath string
 	// dataDir is the node data directory used to derive storage paths.
@@ -35,6 +38,8 @@ type cliFlags struct {
 
 // cliConfig is the resolved runtime configuration for one wkdb invocation.
 type cliConfig struct {
+	// dataDir identifies the node-level format marker, when a root is supplied.
+	dataDir string
 	// options configures the read-only inspect store.
 	options inspect.Options
 	// nodeOptions configures the writable node store for import operations.
@@ -70,6 +75,7 @@ func resolveCLIConfig(flags cliFlags, env []string) (cliConfig, error) {
 	}
 
 	return cliConfig{
+		dataDir: dataDir,
 		options: inspect.Options{
 			MetaPath:      metaPath,
 			MessagePath:   messagePath,

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/WuKongIM/WuKongIM/pkg/cluster/internal/lifecycle"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 )
 
 // Start starts the node runtime and hosted background loops.
@@ -13,6 +14,9 @@ func (n *Node) Start(ctx context.Context) error {
 		return ErrNotStarted
 	}
 	if err := ctxErr(ctx); err != nil {
+		return err
+	}
+	if err := dataformat.Check(n.cfg.DataDir); err != nil {
 		return err
 	}
 	createdDefaultChannels, err := n.ensureDefaultRuntime()

@@ -222,7 +222,7 @@ ssh root@v3-a 'test ! -e /srv/wkmigrate/targets/node101 && test ! -L /srv/wkmigr
 rsync -anc --numeric-ids --delete --itemize-changes /srv/wkmigrate/targets/node101/ root@v3-a:/srv/wkmigrate/targets/node101/
 ```
 
-复制成功后再执行校验命令；`-n` 只预演、不删除文件。要求退出码 0 且无差异，保存结果后再为实际服务账号设置访问权限。必须复制整个目录，包含 Controller 快照、迁移标记和隐藏文件。文件核对不能代替第 3 步的业务校验。
+复制成功后再执行校验命令；`-n` 只预演、不删除文件。要求退出码 0 且无差异，保存结果后再为实际服务账号设置访问权限。必须复制整个目录，包含 Controller 快照、迁移标记、`DATA-FORMAT.json`（若存在）和隐藏文件。数据格式及创建工具版本可通过 [wkcli db info](/zh/server/tools/wkdb#查看数据版本) 查询；旧产物缺少标识时保持未登记。文件核对不能代替第 3 步的业务校验。
 
 若传输中断，确认接收目录仅属于本次、从未启动，且迁移产物未变，再续传该目录并完整核对；不要删除或覆盖其他迁移的数据。
 

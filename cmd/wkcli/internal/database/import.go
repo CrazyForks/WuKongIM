@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/db"
 	"github.com/WuKongIM/WuKongIM/pkg/db/transfer"
 )
@@ -69,6 +70,12 @@ func runImport(ctx context.Context, global cliFlags, args []string, stdout, stde
 		return exitConfig
 	}
 
+	if cfg.dataDir != "" {
+		if err := dataformat.EnsureFresh(cfg.dataDir, global.createdBy, cfg.nodeOptions.MetaPath, cfg.nodeOptions.MessagePath); err != nil {
+			fmt.Fprintln(stderr, err)
+			return exitConfig
+		}
+	}
 	store, err := db.OpenNodeStore(cfg.nodeOptions)
 	if err != nil {
 		fmt.Fprintf(stderr, "open store: %v\n", err)

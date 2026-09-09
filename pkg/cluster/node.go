@@ -17,6 +17,7 @@ import (
 	"github.com/WuKongIM/WuKongIM/pkg/cluster/observe"
 	"github.com/WuKongIM/WuKongIM/pkg/cluster/propose"
 	"github.com/WuKongIM/WuKongIM/pkg/cluster/routing"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	metadb "github.com/WuKongIM/WuKongIM/pkg/db/meta"
 	"github.com/WuKongIM/WuKongIM/pkg/raftlog"
 	"github.com/WuKongIM/WuKongIM/pkg/slot/multiraft"
@@ -223,13 +224,17 @@ type preferredLeaderIntentGeneration struct {
 	snapshot control.Snapshot
 }
 
-// New validates cfg and creates a cluster node.
+// New validates cfg, records format identity for a fresh directory, and creates a node.
+// Existing unregistered directories retain their historical startup behavior.
 func New(cfg Config, opts ...Option) (*Node, error) {
 	cfg = cfg.WithDefaults()
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
 	if err := validateOfflineImportConfig(cfg); err != nil {
+		return nil, err
+	}
+	if err := dataformat.EnsureFresh(cfg.DataDir, cfg.CreatedBy, cfg.Control.StateDir); err != nil {
 		return nil, err
 	}
 	node := &Node{cfg: cfg, router: routing.NewRouter(), discovery: clusternet.NewDiscovery(), snapshot: Snapshot{NodeID: cfg.NodeID}, channelDataPlaneLease: newChannelDataPlaneLeaseGuard(time.Now, cfg.HealthReport.TTL), messageEventStreamCache: newMessageEventStreamCache(0), messageEventFinishCoalescer: newMessageEventFinishCoalescer(defaultMessageEventFinishCoalesceWindow)}
