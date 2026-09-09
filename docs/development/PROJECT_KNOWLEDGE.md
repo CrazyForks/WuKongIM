@@ -2,6 +2,12 @@
 
 ## Internal
 
+- EasySDK current tutorial selections live only in `docs-site/lib/easy-sdk-releases.json`.
+  The build resolves explicit MDX tokens for both languages, while navigation
+  reads the manifest directly. SDK source, vcpkg registry and tool pins are
+  independent. Historical evidence and fix-introduction versions remain literal;
+  changing a selection never certifies an older live matrix against a newer SDK.
+
 - Durable Channel replication excludes learners from quorum votes and recovery voting. Authority installation copies its quorum-proved committed frontier to non-ISR replicas through the fixed repair workers, one bounded page per turn; the repair ledger allows the configured voter count plus one replacement replica and fences cursors to exact work generations. Migration probes refresh loaded follower frontiers from consistent exact storage because quorum exchanges bypass follower reactor state. A replica-replacement target below `CutoverLEO` remains runnable; invalid runtime proofs still block promotion.
 
 - A migration spool path must be absent on first creation; an existing empty

@@ -3,7 +3,7 @@ title: Rust 快速接入
 description: 按准备、安装、连接、收发和清理顺序完成首次接入。
 ---
 
-使用 Rust 1.86+、Tokio 和 crates.io **0.1.0** 完成在线收发。支持原生程序，不支持浏览器/WASM。
+使用 Rust 1.86+、Tokio 和 crates.io **WK_EASYSDK_RUST_VERSION** 完成在线收发。支持原生程序，不支持浏览器/WASM。
 
 ## 1. 准备接入
 
@@ -17,11 +17,11 @@ description: 按准备、安装、连接、收发和清理顺序完成首次接�
 
 ## 2. 安装 SDK
 
-官方仓库：[WuKongIM/WuKongEasySDK-Rust](https://github.com/WuKongIM/WuKongEasySDK-Rust)。已发布 [crates.io `0.1.0`](https://crates.io/crates/wukong-easy-sdk/0.1.0)，需要 Rust **1.86+** 和 Tokio。使用以下精确版本：
+官方仓库：[WuKongIM/WuKongEasySDK-Rust](https://github.com/WuKongIM/WuKongEasySDK-Rust)。已发布 [crates.io `WK_EASYSDK_RUST_VERSION`](https://crates.io/crates/wukong-easy-sdk/WK_EASYSDK_RUST_VERSION)，需要 Rust **1.86+** 和 Tokio。使用以下精确版本：
 
 ```toml
 [dependencies]
-wukong-easy-sdk = "=0.1.0"
+wukong-easy-sdk = "=WK_EASYSDK_RUST_VERSION"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde_json = "1"
 ```
@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-Rust.git
 cd WuKongEasySDK-Rust
-git checkout v0.1.0
+git checkout WK_EASYSDK_RUST_SOURCE_REF
 cargo build --locked --example chat
 ```
 

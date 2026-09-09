@@ -3,7 +3,7 @@ title: C++ 快速接入
 description: 按准备、安装、连接、收发和清理顺序完成首次接入。
 ---
 
-使用 C++17、CMake 和 WuKongEasySDK **0.1.0** 完成在线收发。主流程采用 WuKongIM 维护的 vcpkg registry；其他安装方式见文末。
+使用 C++17、CMake 和 WuKongEasySDK **WK_EASYSDK_CPP_VERSION** 完成在线收发。主流程采用 WuKongIM 维护的 vcpkg registry；其他安装方式见文末。
 
 ## 1. 准备接入
 
@@ -18,7 +18,7 @@ description: 按准备、安装、连接、收发和清理顺序完成首次接�
 先安装 [vcpkg](https://learn.microsoft.com/zh-cn/vcpkg/get_started/get-started)，
 将 `VCPKG_ROOT` 指向安装目录。准备 Git、CMake 3.20+ 和 C++17 编译器：
 Windows 使用 Visual Studio 2022，macOS 使用 Xcode 命令行工具，Linux 使用 GCC/Clang。
-本文固定 vcpkg 工具版本为 `04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4`。
+本文固定 vcpkg 工具版本为 `WK_EASYSDK_CPP_VCPKG_BASELINE`。
 
 在你的应用目录创建 `vcpkg.json`：
 
@@ -33,13 +33,13 @@ Windows 使用 Visual Studio 2022，macOS 使用 Xcode 命令行工具，Linux �
   "default-registry": {
     "kind": "git",
     "repository": "https://github.com/microsoft/vcpkg",
-    "baseline": "04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4"
+    "baseline": "WK_EASYSDK_CPP_VCPKG_BASELINE"
   },
   "registries": [
     {
       "kind": "git",
       "repository": "https://github.com/WuKongIM/WuKongEasySDK-CPP.git",
-      "baseline": "63ec99d34c7605b64e2173d201639042e0e49de9",
+      "baseline": "WK_EASYSDK_CPP_REGISTRY_BASELINE",
       "packages": [
         "wukong-easy-sdk"
       ]
@@ -53,7 +53,7 @@ Windows 使用 Visual Studio 2022，macOS 使用 Xcode 命令行工具，Linux �
 ```cmake
 cmake_minimum_required(VERSION 3.20)
 project(my_app LANGUAGES CXX)
-find_package(WuKongEasySDK 0.1 CONFIG REQUIRED)
+find_package(WuKongEasySDK WK_EASYSDK_CPP_CMAKE_VERSION CONFIG REQUIRED)
 add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE WuKongEasySDK::WuKongEasySDK)
 ```
@@ -67,7 +67,7 @@ SDK port 为静态库；Windows 使用 `x64-windows` 时，分发应用需要携
 
 这是 WuKongIM 在本仓库维护的公开 Git registry，不是微软默认目录中的包，
 因此必须同时提供 registry 配置和依赖声明。SDK 源码固定为
-`3e367a908f42385ab9306f9708b7456399cace7d`，与 registry baseline 分别固定。
+`WK_EASYSDK_CPP_SOURCE_REF`，与 registry baseline 分别固定。
 将两个 JSON 文件提交到应用仓库；已有 manifest 的项目应合并字段，不要覆盖原有依赖。
 
 [独立消费端示例](https://github.com/WuKongIM/WuKongEasySDK-CPP/tree/main/examples/vcpkg-consumer) · [Registry 维护说明](https://github.com/WuKongIM/WuKongEasySDK-CPP/blob/main/docs/VCPKG.md)
@@ -184,7 +184,7 @@ WSS 默认启用证书链和主机名验证，最低 TLS 1.2。私有 CA 可通�
 
 ## 其他安装方式：预编译包
 
-希望跳过依赖编译时，从 [C++ SDK v0.1.0 Release](https://github.com/WuKongIM/WuKongEasySDK-CPP/releases/tag/v0.1.0) 下载匹配的 ZIP 和 `SHA256SUMS`，验证 SHA-256 后解压。只需准备 CMake 3.20+ 和匹配的 C++ 开发环境，无需另装 vcpkg。
+希望跳过依赖编译时，从 [C++ SDK WK_EASYSDK_CPP_TAG Release](https://github.com/WuKongIM/WuKongEasySDK-CPP/releases/tag/WK_EASYSDK_CPP_TAG) 下载匹配的 ZIP 和 `SHA256SUMS`，验证 SHA-256 后解压。只需准备 CMake 3.20+ 和匹配的 C++ 开发环境，无需另装 vcpkg。
 
 | 压缩包后缀 | 对应环境 |
 | --- | --- |
@@ -192,7 +192,7 @@ WSS 默认启用证书链和主机名验证，最低 TLS 1.2。私有 CA 可通�
 | `macos-arm64-appleclang.zip` | macOS 14+ arm64、Apple Clang、libc++ |
 | `windows-x64-msvc143-md.zip` | Windows x64、Visual Studio 2022 v143；Release `/MD`、Debug `/MDd` |
 
-包名统一以 `WuKongEasySDK-CPP-0.1.0-` 开头。包内包含 Debug/Release 静态 SDK、Boost/JSON 头文件、OpenSSL 库、许可文件和最小示例。在解压目录执行：
+包名统一以 `WuKongEasySDK-CPP-WK_EASYSDK_CPP_VERSION-` 开头。包内包含 Debug/Release 静态 SDK、Boost/JSON 头文件、OpenSSL 库、许可文件和最小示例。在解压目录执行：
 
 ```sh
 # Linux / macOS
@@ -221,7 +221,7 @@ Unix 的 OpenSSL 为静态库；Windows 使用包内 DLL，发布应用时携带
 ```sh
 git clone https://github.com/WuKongIM/WuKongEasySDK-CPP.git
 cd WuKongEasySDK-CPP
-git checkout 3e367a908f42385ab9306f9708b7456399cace7d
+git checkout WK_EASYSDK_CPP_SOURCE_REF
 
 # macOS
 brew install cmake boost openssl@3 nlohmann-json
@@ -238,7 +238,7 @@ ctest --test-dir build -C Release --output-on-failure
 Windows 使用 Visual Studio 2022 和 vcpkg，仓库 `vcpkg.json` 固定 baseline：
 
 ```powershell
-git -C "$env:VCPKG_ROOT" fetch origin 04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4
+git -C "$env:VCPKG_ROOT" fetch origin WK_EASYSDK_CPP_VCPKG_BASELINE
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
 cmake --build build --config Release --parallel 2
 ctest --test-dir build -C Release --output-on-failure
@@ -251,7 +251,7 @@ add_subdirectory(external/WuKongEasySDK-CPP)
 target_link_libraries(my_app PRIVATE WuKongEasySDK::WuKongEasySDK)
 ```
 
-也可执行 `cmake --install build --config Release --prefix /path/to/sdk-prefix`，在下游用 `find_package(WuKongEasySDK 0.1 CONFIG REQUIRED)`，并将 `CMAKE_PREFIX_PATH` 指向安装目录。静态库导出保留第三方依赖；Windows 分发需要携带所用的动态依赖。
+也可执行 `cmake --install build --config Release --prefix /path/to/sdk-prefix`，在下游用 `find_package(WuKongEasySDK WK_EASYSDK_CPP_CMAKE_VERSION CONFIG REQUIRED)`，并将 `CMAKE_PREFIX_PATH` 指向安装目录。静态库导出保留第三方依赖；Windows 分发需要携带所用的动态依赖。
 
 ## 运行预编译包或源码中的交互示例
 

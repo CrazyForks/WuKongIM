@@ -1,9 +1,9 @@
 ---
 title: Flutter quickstart
-description: Install version 1.1.0, obtain credentials from your backend, exchange online messages, and clean up.
+description: Install the pinned SDK version, obtain credentials from your backend, exchange online messages, and clean up.
 ---
 
-This tutorial uses **1.1.0** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
+This tutorial uses **WK_EASYSDK_FLUTTER_VERSION** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
 
 ## 1. Prepare
 
@@ -28,7 +28,7 @@ Add the exact version to `pubspec.yaml`:
 dependencies:
   flutter:
     sdk: flutter
-  wukong_easy_sdk: 1.1.0
+  wukong_easy_sdk: WK_EASYSDK_FLUTTER_VERSION
 ```
 
 Then run:
@@ -237,7 +237,7 @@ Page disposal removes listeners, calls `disconnect()`, and calls `dispose()`. To
 
 - **Initialization or a UID switch leaves stale state:** wait for `easySDK.init(config)` before connecting. Before switching accounts, remove listeners, disconnect, and `dispose`, then clear product-local state.
 - **Messages duplicate after Widget rebuild:** never register listeners from `build`; retain callbacks and remove them from `dispose`.
-- **System logs still contain a token or payload:** first confirm the lockfile actually resolves `wukong_easy_sdk 1.1.0`, then inspect application callbacks, `debugPrint`, a custom `logHandler`, and collectors for complete event or model logging. SDK diagnostics are off by default and should emit only sanitized operational metadata when explicitly enabled. Reproduce with the Release artifact and retain only low-sensitivity evidence before filing an issue.
+- **System logs still contain a token or payload:** first confirm the lockfile actually resolves `wukong_easy_sdk WK_EASYSDK_FLUTTER_VERSION`, then inspect application callbacks, `debugPrint`, a custom `logHandler`, and collectors for complete event or model logging. SDK diagnostics are off by default and should emit only sanitized operational metadata when explicitly enabled. Reproduce with the Release artifact and retain only low-sensitivity evidence before filing an issue.
 - **`message.payload` is a string:** the current server emits valid JSON objects as objects. If a string remains, confirm the server revision, then try Base64 → UTF-8 JSON and preserve unknown formats for fallback UI.
 - **A physical device cannot reach the local address:** `localhost` means the device itself; have the product backend return a device-reachable WSS ingress.
 - **Send succeeds but the peer message is absent from the UI:** inspect send result, realtime receipt, and offline recovery separately.

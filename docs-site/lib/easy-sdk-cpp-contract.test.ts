@@ -1,28 +1,30 @@
+import { easySdkReleases, resolveEasySdkText } from './easy-sdk-version';
 import { describe, expect, test } from 'bun:test';
 import { getNavigationEntry, getIndexedNavigationEntries } from './navigation';
 
 const root = new URL('../content/docs/sdk/easy/', import.meta.url);
-const revision = '3e367a908f42385ab9306f9708b7456399cace7d';
+const release = easySdkReleases.cpp;
+const revision = release.sourceRevision ?? `v${release.version}`;
 const repository = 'https://github.com/WuKongIM/WuKongEasySDK-CPP';
 
 describe('C++ EasySDK vcpkg and source tutorial', () => {
   test('publishes both locales with independent SDK source and vcpkg registry pins', async () => {
     for (const [locale, suffix] of [['zh', ''], ['en', '.en']] as const) {
-      const page = await Bun.file(new URL(`cpp/getting-started${suffix}.mdx`, root)).text();
-      const overview = await Bun.file(new URL(`index${suffix}.mdx`, root)).text();
-      const examples = await Bun.file(new URL(`examples${suffix}.mdx`, root)).text();
+      const page = resolveEasySdkText(await Bun.file(new URL(`cpp/getting-started${suffix}.mdx`, root)).text());
+      const overview = resolveEasySdkText(await Bun.file(new URL(`index${suffix}.mdx`, root)).text());
+      const examples = resolveEasySdkText(await Bun.file(new URL(`examples${suffix}.mdx`, root)).text());
       expect(getNavigationEntry(locale, 'sdk', ['easy', 'cpp', 'getting-started'])?.status).toBe('published');
       expect(getIndexedNavigationEntries(locale).map((entry) => entry.url)).toContain(`/${locale}/sdk/easy/cpp/getting-started`);
       for (const content of [page, overview, examples]) {
         if (content === page || content === overview) expect(content).toContain(repository);
         expect(content).not.toContain('CPP_SOURCE_REV');
-        if (content !== examples) expect(content).toContain('0.1.0');
+        if (content !== examples) expect(content).toContain(release.version);
       }
       for (const content of [overview, examples]) {
         expect(content).toContain(`/${locale}/sdk/easy/cpp/getting-started`);
       }
       expect(page).toContain(revision);
-      expect(page).toContain(`${repository}/releases/tag/v0.1.0`);
+      expect(page).toContain(`${repository}/releases/tag/v${release.version}`);
       for (const platform of ['linux-x64-gcc13.zip', 'macos-arm64-appleclang.zip', 'windows-x64-msvc143-md.zip']) {
         expect(page).toContain(platform);
       }
@@ -37,15 +39,15 @@ describe('C++ EasySDK vcpkg and source tutorial', () => {
       expect(manifests[1]).toEqual({
         'default-registry': {
           kind: 'git', repository: 'https://github.com/microsoft/vcpkg',
-          baseline: '04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4',
+          baseline: release.vcpkgBaseline,
         },
         registries: [{
           kind: 'git', repository: `${repository}.git`,
-          baseline: '63ec99d34c7605b64e2173d201639042e0e49de9',
+          baseline: release.registryBaseline,
           packages: ['wukong-easy-sdk'],
         }],
       });
-      expect(page).toContain('find_package(WuKongEasySDK 0.1 CONFIG REQUIRED)');
+      expect(page).toContain(`find_package(WuKongEasySDK ${release.cmakeVersion} CONFIG REQUIRED)`);
       expect(page).toContain(`git checkout ${revision}`);
       expect(page).toContain('WuKongEasySDK::WuKongEasySDK');
       expect(page).toContain('CMAKE_TOOLCHAIN_FILE');

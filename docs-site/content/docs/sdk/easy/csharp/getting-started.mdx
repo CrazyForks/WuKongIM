@@ -3,7 +3,7 @@ title: C# 快速接入
 description: 按准备、安装、连接、收发和清理顺序完成首次接入。
 ---
 
-使用 .NET 8+ 和 NuGet **1.0.0**，让两个独立控制台客户端完成在线收发。
+使用 .NET 8+ 和 NuGet **WK_EASYSDK_CSHARP_VERSION**，让两个独立控制台客户端完成在线收发。
 
 ## 1. 准备接入
 
@@ -32,7 +32,7 @@ description: 按准备、安装、连接、收发和清理顺序完成首次接�
 
 ```bash
 dotnet new console -n MyChat --framework net8.0
-dotnet add MyChat/MyChat.csproj package WuKongEasySDK --version 1.0.0 --source https://api.nuget.org/v3/index.json
+dotnet add MyChat/MyChat.csproj package WuKongEasySDK --version WK_EASYSDK_CSHARP_VERSION --source https://api.nuget.org/v3/index.json
 ```
 
 ## 3. 连接与监听
@@ -144,7 +144,7 @@ SDK 不缓存离线消息，也不自动重发 SEND。请求超时、取消或�
 
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-CSharp.git
-git -C WuKongEasySDK-CSharp checkout 02ea7d60cd94feef1996f41bca35ffc3b8e18ea6
+git -C WuKongEasySDK-CSharp checkout WK_EASYSDK_CSHARP_SOURCE_REF
 dotnet new console -n MyChat --framework net8.0
 dotnet add MyChat/MyChat.csproj reference WuKongEasySDK-CSharp/src/WuKongEasySDK/WuKongEasySDK.csproj
 ```
@@ -156,7 +156,7 @@ dotnet add MyChat/MyChat.csproj reference WuKongEasySDK-CSharp/src/WuKongEasySDK
 ```bash
 cd WuKongEasySDK-CSharp
 dotnet pack src/WuKongEasySDK -c Release -o artifacts
-dotnet add ../MyChat/MyChat.csproj package WuKongEasySDK --version 1.0.0 --source ./artifacts
+dotnet add ../MyChat/MyChat.csproj package WuKongEasySDK --version WK_EASYSDK_CSHARP_VERSION --source ./artifacts
 ```
 
 公共包、项目引用和本地包三选一，不要同时引用。此处的 `--source ./artifacts` 指向你刚生成的本地源。

@@ -3,7 +3,7 @@ title: Python quickstart
 description: Prepare, install, connect, exchange the first messages, and clean up.
 ---
 
-Use Python 3.11+, asyncio, and PyPI **0.1.0** for online messaging. Each client belongs to one event loop.
+Use Python 3.11+, asyncio, and PyPI **WK_EASYSDK_PYTHON_VERSION** for online messaging. Each client belongs to one event loop.
 
 ## 1. Prepare
 
@@ -15,12 +15,12 @@ To see messages first, follow [the official example](/en/sdk/easy/examples#pytho
 
 ## 2. Install the SDK
 
-This tutorial uses [PyPI `wukong-easy-sdk==0.1.0`](https://pypi.org/project/wukong-easy-sdk/0.1.0/) and requires Python 3.11+. The distribution name is `wukong-easy-sdk`; the import name is `wukong_easy_sdk`.
+This tutorial uses [PyPI `wukong-easy-sdk==WK_EASYSDK_PYTHON_VERSION`](https://pypi.org/project/wukong-easy-sdk/WK_EASYSDK_PYTHON_VERSION/) and requires Python 3.11+. The distribution name is `wukong-easy-sdk`; the import name is `wukong_easy_sdk`.
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==0.1.0"
+python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==WK_EASYSDK_PYTHON_VERSION"
 ```
 
 On Windows PowerShell, replace activation with `.venv\Scripts\Activate.ps1`. The runtime dependency is `websockets>=15.0.1,<18`; `uv.lock` pins development and validation dependencies.
@@ -75,7 +75,7 @@ Automatic RECVACK means the message entered the SDK dispatcher, not that applica
 Download the matching example source and keep using the same virtual environment:
 
 ```sh
-git clone --branch v0.1.0 --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
+git clone --branch WK_EASYSDK_PYTHON_TAG --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
 ```
 
 In two terminals, set each user's `WKIM_UID`, `WKIM_TOKEN`, `WKIM_PEER`, and optional `WKIM_URL`, then run:

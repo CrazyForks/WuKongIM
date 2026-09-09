@@ -1,0 +1,19 @@
+{
+  "ios": { "version": "1.1.1" },
+  "android": { "version": "1.0.5" },
+  "flutter": { "version": "1.1.0" },
+  "javascript": { "version": "2.0.5" },
+  "rust": { "version": "0.1.0" },
+  "csharp": {
+    "version": "1.0.0",
+    "sourceRevision": "02ea7d60cd94feef1996f41bca35ffc3b8e18ea6"
+  },
+  "cpp": {
+    "version": "0.1.0",
+    "sourceRevision": "3e367a908f42385ab9306f9708b7456399cace7d",
+    "registryBaseline": "63ec99d34c7605b64e2173d201639042e0e49de9",
+    "vcpkgBaseline": "04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4",
+    "cmakeVersion": "0.1"
+  },
+  "python": { "version": "0.1.0" }
+}
