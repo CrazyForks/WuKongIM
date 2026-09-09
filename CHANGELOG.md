@@ -6,6 +6,10 @@ move those entries into a version section named for that exact tag.
 
 ## [Unreleased]
 
+### 🔧 Improvements / 改进
+
+- Require automatic installed `wkcli` identity and offline functional acceptance on all four signed-package client distributions before a new release is complete. / 新版本签名包发布增加四种 Linux 系统的 wkcli 安装身份与离线功能自动验收，全部通过后才算交付完成。
+
 ### 📚 Documentation / 文档
 
 - Document released wkcli installation, paired server/CLI version checks, and installed-command examples in both languages; complete the migration tool navigation. / 补齐中英文 wkcli 发布版安装、服务端与工具版本核对、已安装命令示例及迁移工具导航。
