@@ -16,6 +16,7 @@ import (
 	nodeopscmd "github.com/WuKongIM/WuKongIM/cmd/wkcli/internal/nodeops"
 	simcmd "github.com/WuKongIM/WuKongIM/cmd/wkcli/internal/sim"
 	topcmd "github.com/WuKongIM/WuKongIM/cmd/wkcli/internal/top"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ func run(args []string) int {
 
 func runWithIO(args []string, stdout, stderr io.Writer) int {
 	contextDir := contextcmd.DefaultStoreDir()
-	deps := command.Deps{Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, ContextDir: &contextDir}
+	deps := command.Deps{Build: dataformat.Build{Program: "wkcli", Version: buildVersion, Commit: buildCommit, BuildSource: buildSource}, Stdin: os.Stdin, Stdout: stdout, Stderr: stderr, ContextDir: &contextDir}
 	cmd := newRootCommand(deps, defaultCommandFactories())
 	// Only raw parser families need root flags consumed before their argument
 	// vector is forwarded. Cobra families retain leaf flags before subcommands.

@@ -10,6 +10,7 @@ import (
 	_ "time/tzdata" // Keep configured IANA time zones available in minimal runtime images.
 
 	"github.com/WuKongIM/WuKongIM/internal/app"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 )
 
 const defaultStopTimeout = 5 * time.Second
@@ -68,7 +69,7 @@ func run(ctx context.Context, args []string, newApp appFactory) error {
 
 // newInternalApp builds the internal composition root.
 func newInternalApp(cfg app.Config) (runtimeApp, error) {
-	return app.New(cfg, app.WithBuildVersion(buildVersion))
+	return app.New(cfg, app.WithBuildIdentity(dataformat.Build{Program: "wukongim", Version: buildVersion, Commit: buildCommit, BuildSource: buildSource}))
 }
 
 // stopTimeout returns the configured stop budget or the entrypoint default.

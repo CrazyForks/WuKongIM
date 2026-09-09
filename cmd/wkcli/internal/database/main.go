@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/db/inspect"
 )
 
@@ -24,8 +25,12 @@ func runWithIO(args []string, stdin io.Reader, stderr io.Writer) int {
 }
 
 func runWithStreams(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	return runWithBuild(args, stdin, stdout, stderr, dataformat.Build{})
+}
+
+func runWithBuild(args []string, stdin io.Reader, stdout, stderr io.Writer, build dataformat.Build) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: wkcli db [flags] <query|repl|import|export|diff>")
+		fmt.Fprintln(stderr, "usage: wkcli db [flags] <info|query|repl|import|export|diff>")
 		return exitConfig
 	}
 	flags, rest, code := parseFlags(args, stderr)
@@ -33,10 +38,13 @@ func runWithStreams(args []string, stdin io.Reader, stdout, stderr io.Writer) in
 		return code
 	}
 	if len(rest) == 0 {
-		fmt.Fprintln(stderr, "usage: wkcli db [flags] <query|repl|import|export|diff>")
+		fmt.Fprintln(stderr, "usage: wkcli db [flags] <info|query|repl|import|export|diff>")
 		return exitConfig
 	}
+	flags.createdBy = build
 	switch rest[0] {
+	case "info":
+		return runInfo(flags, rest[1:], stdout, stderr)
 	case "query":
 		if len(rest) < 2 {
 			fmt.Fprintln(stderr, "usage: wkcli db [flags] query <sql>")
@@ -67,7 +75,7 @@ func parseFlags(args []string, stderr io.Writer) (cliFlags, []string, int) {
 	fs := flag.NewFlagSet("wkcli db", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() {
-		fmt.Fprint(stderr, "Usage: wkcli db [flags] <query|repl|import|export|diff>\n\nGlobal flags must precede the database subcommand. query takes SQL; repl reads stdin.\nimport writes an offline target; export and diff inspect source data.\n")
+		fmt.Fprint(stderr, "Usage: wkcli db [flags] <info|query|repl|import|export|diff>\n\nGlobal flags must precede the database subcommand. info reads data format identity without opening stores; query takes SQL; repl reads stdin.\nimport writes an offline target; export and diff inspect source data.\n")
 		fs.PrintDefaults()
 	}
 	fs.StringVar(&flags.configPath, "config", "", "path to wukongim.toml")
@@ -92,6 +100,12 @@ func withStore(flags cliFlags, stderr io.Writer, fn func(*inspect.Store, string)
 	if err != nil {
 		fmt.Fprintf(stderr, "config error: %v\n", err)
 		return exitConfig
+	}
+	if cfg.dataDir != "" {
+		if err := dataformat.Check(cfg.dataDir); err != nil {
+			fmt.Fprintln(stderr, err)
+			return exitConfig
+		}
 	}
 	store, err := inspect.OpenStore(cfg.options)
 	if err != nil {

@@ -16,7 +16,7 @@ func NewCommand(deps command.Deps) *cobra.Command {
 	run := func(ctx context.Context, args []string) error {
 		ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 		defer cancel()
-		if code := migrationapp.Run(ctx, args, deps.Stdout, deps.Stderr); code != 0 {
+		if code := migrationapp.RunWithBuild(ctx, args, deps.Stdout, deps.Stderr, deps.Build); code != 0 {
 			return command.Exit{Code: code}
 		}
 		return nil

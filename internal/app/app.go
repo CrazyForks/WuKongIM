@@ -35,6 +35,7 @@ import (
 	"github.com/WuKongIM/WuKongIM/internal/usecase/presence"
 	userusecase "github.com/WuKongIM/WuKongIM/internal/usecase/user"
 	"github.com/WuKongIM/WuKongIM/pkg/cluster"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/gateway"
 	goruntimeregistry "github.com/WuKongIM/WuKongIM/pkg/goroutine"
 	obsmetrics "github.com/WuKongIM/WuKongIM/pkg/metrics"
@@ -85,9 +86,11 @@ type App struct {
 	cfg Config
 	// buildVersion is the release version reported by this process to cluster management views.
 	buildVersion string
-	cluster      ClusterRuntime
-	api          APIRuntime
-	manager      ManagerRuntime
+	// buildIdentity is immutable creator provenance passed to fresh node directories.
+	buildIdentity dataformat.Build
+	cluster       ClusterRuntime
+	api           APIRuntime
+	manager       ManagerRuntime
 	// opsMCPEndpoint serves stateless MCP on every configured Manager listener.
 	opsMCPEndpoint *accessops.Endpoint
 	// opsMCPCalls owns node-local rate budgets and rotated audit output.
@@ -224,12 +227,21 @@ func New(cfg Config, opts ...Option) (*App, error) {
 		return nil, err
 	}
 	app.applyOptions(opts)
+	clusterCfg := defaultClusterConfig(app.cfg)
+	clusterCfg.CreatedBy = app.buildIdentity
+	clusterCfg.CreatedBy.Version = app.buildVersion
+	// Inspect freshness before a nested log directory can make the root nonempty.
+	// An injected cluster owns its own data-directory lifecycle.
+	if app.cluster == nil {
+		if err := dataformat.EnsureFresh(clusterCfg.DataDir, clusterCfg.CreatedBy, clusterCfg.Control.StateDir); err != nil {
+			return nil, err
+		}
+	}
 	app.ensureStartupConsole()
 	if err := app.ensureLogger(); err != nil {
 		return nil, err
 	}
 
-	clusterCfg := defaultClusterConfig(app.cfg)
 	clusterCfg.Logger = app.logger.Named("cluster")
 	clusterCfg.MaintenanceObserver = appMaintenanceObserver{
 		app: app, next: clusterCfg.MaintenanceObserver,
@@ -378,6 +390,14 @@ func WithLogger(logger wklog.Logger) Option {
 // WithBuildVersion sets the program version reported by this process.
 func WithBuildVersion(version string) Option {
 	return func(a *App) { a.buildVersion = strings.TrimSpace(version) }
+}
+
+// WithBuildIdentity records the initializing binary without changing stored data versions.
+func WithBuildIdentity(build dataformat.Build) Option {
+	return func(a *App) {
+		a.buildIdentity = build
+		a.buildVersion = strings.TrimSpace(build.Version)
+	}
 }
 
 // Handler returns the gateway access handler.

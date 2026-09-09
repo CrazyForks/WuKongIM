@@ -9,6 +9,13 @@ and [final acceptance report](../../../../docs/superpowers/reports/2026-09-08-v2
 for the tested source, explicit policies, cache reset procedure, and validation limits.
 Offline verification does not switch production traffic.
 
+`source_commit` is optional in the plan. Omission or an empty value selects the
+pinned reader schema above; it does not detect or certify the source binary
+revision. Explicit different revisions are rejected. Actual format and business
+compatibility checks still run. Normalization precedes plan hashing, so legacy
+explicit plans and omitted-field plans retain the same workspace/archive identity.
+Tools released before this change still require the explicit field.
+
 For a fresh rehearsal using delivered Linux binaries, see the
 [isolated package rehearsal](../../../../scripts/migration/README.md). Its dry run
 validates inputs and mount isolation before starting the full offline pipeline.

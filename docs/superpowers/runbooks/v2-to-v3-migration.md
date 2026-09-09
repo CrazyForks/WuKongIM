@@ -217,7 +217,11 @@ GOWORK=off go build -o /srv/tools/wukongim-v3 ./cmd/wukongim
 ```
 
 停机前记录原部署的版本凭据、所有节点 ID、数据目录、业务 DB 分片数和有效配置
-（包括环境变量）。`source_commit` 是运维提供的版本证据，不是工具自动鉴定二进制。
+（包括环境变量）；二进制部署者无需查找源码提交。新工具允许省略 `source_commit`，
+使用内置的原版 v2 读取规则，仍逐项检查实际格式与业务兼容性。报告及归档中的提交号
+标识读取规则，不代表自动鉴定了旧二进制。已知其他版本或自定义修改仍需单独评估。
+旧版工具（包括 v3.0.0-beta.12）仍需显式字段；下方示例保留该兼容写法。
+新工具在计算计划摘要前补齐省略值，保持旧计划及归档的身份；显式不同提交仍会报错。
 
 阻断所有业务写入口，等待原版集群应用完日志、完成正在进行的拓扑变更并排空通知；
 通过原有 API 留存代表性历史消息、权限、会话、CMD 和事件同步响应。然后正常停机，
@@ -248,7 +252,7 @@ GOWORK=off go build -o /srv/tools/wukongim-v3 ./cmd/wukongim
   "target": {
     "cluster_id": "production-v3-migrated",
     "created_at": "2026-09-06T08:00:00Z",
-    "slot_count": 256,
+    "slot_count": 12,
     "hash_slot_count": 256,
     "replicas": 3,
     "channel_replicas": 3,

@@ -6,8 +6,7 @@ summary: Composes Controller state, Slot Multi-Raft metadata, typed node RPC, ro
 # Cluster Runtime Flow
 
 ## Responsibility
-`Node` composes Controller, Slot, Channel, transport, routing and observation;
-it owns lifecycle, readiness and bounded snapshots in every cluster.
+`Node` composes cluster runtimes and owns lifecycle, readiness and bounded snapshots.
 
 ## Boundaries
 
@@ -15,22 +14,18 @@ it owns lifecycle, readiness and bounded snapshots in every cluster.
   `routing` publishes hash-Slot authority; `slots` and `propose` own Slot
   Multi-Raft lifecycle and proposals; `channels` hosts Channel runtimes; `net`
   transports typed node RPC; `observe` runs low-frequency reporting.
-- `Node` delegates validated intents. Manager business policy, drain safety,
-  access DTOs, and response shaping remain in `internal`.
-- Typed RPC routes opaque upper-layer DTOs by registered service. Cluster may
-  fence maintenance and ownership but must not absorb delivery or Manager
-  business logic.
-- Controller, Slot, Channel, transport, and storage implementations remain
-  behind public facades and neutral errors.
+- `Node` delegates validated intents; Manager policy, drain safety, DTOs and response shaping stay in `internal`.
+- Typed RPC routes opaque DTOs by registered service; cluster may fence maintenance/ownership but does not absorb delivery or Manager logic.
+- Controller, Slot, Channel, transport and storage stay behind public facades and neutral errors.
 
 ## Main Flows
 
-1. Lifecycle starts transport and Controller, installs control routes, reconciles
+1. Node construction records format identity only for fresh directories; startup rechecks
+   supported markers before writable runtimes. Lifecycle starts transport and Controller, installs control routes, reconciles
    Slots/Channels and exposes readiness. Stop rejects work and reverses ownership.
 2. Slot proposals and metadata facades resolve one immutable route snapshot,
    group Channel- or UID-owned work by physical Slot, execute locally or
-   forward, and recheck leadership. Person-directory prepare joins UID
-   membership/runtime metadata before publishing directory-ready.
+   forward, and recheck leadership. Person-directory prepare joins UID membership/runtime metadata before publishing directory-ready.
 3. Channel append resolves or creates Slot-owned runtime metadata, applies it
    monotonically to the selected runtime, and appends locally or forwards to
    the exact leader while background control/task convergence stays bounded.
@@ -56,6 +51,8 @@ it owns lifecycle, readiness and bounded snapshots in every cluster.
 
 ## Invariants and Failure Semantics
 
+- `pkg/dataformat` owns immutable format/creator metadata; missing markers stay unregistered.
+  Corrupt or unsupported markers fail before storage opens.
 - Offline generation seals reject incomplete imports and mismatched bootstrap
   configuration before native startup.
 - Event sequence reads route to the Slot leader and include durable projections.
@@ -94,10 +91,8 @@ it owns lifecycle, readiness and bounded snapshots in every cluster.
 
 ## Read First
 
-- [Public API](api.go) and [Node ownership](node.go)
-- [Lifecycle](node_lifecycle.go)
-- [Routing publication](routing/router.go)
-- [Channel hosting](channels/service.go)
+- [Public API](api.go), [Node ownership](node.go), [Lifecycle](node_lifecycle.go)
+- [Routing publication](routing/router.go), [Channel hosting](channels/service.go)
 
 ## Update Triggers
 

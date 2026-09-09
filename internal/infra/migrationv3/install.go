@@ -18,6 +18,7 @@ import (
 	"github.com/WuKongIM/WuKongIM/pkg/controller/raft/raftstore"
 	"github.com/WuKongIM/WuKongIM/pkg/controller/state"
 	"github.com/WuKongIM/WuKongIM/pkg/controller/statefile"
+	"github.com/WuKongIM/WuKongIM/pkg/dataformat"
 	"github.com/WuKongIM/WuKongIM/pkg/db/message"
 	"github.com/WuKongIM/WuKongIM/pkg/db/message/channelcompat"
 	"github.com/WuKongIM/WuKongIM/pkg/db/meta"
@@ -30,6 +31,8 @@ import (
 // InstallOptions includes independently prepared node-local plugin state and
 // executables. Both participate in the immutable generation identity.
 type InstallOptions struct {
+	// CreatedBy records the tool that first initializes the target generation.
+	CreatedBy       dataformat.Build
 	PluginSettings  *migration.PluginSettingsReport
 	PluginArtifacts *migration.PluginArtifactsReport
 }
@@ -48,12 +51,14 @@ func Install(ctx context.Context, plan migration.TargetPlan, report migration.Ta
 			err = errors.Join(err, locks[i].Close())
 		}
 	}()
+	var createdBy dataformat.Build
 	var pluginSettings *migration.PluginSettingsReport
 	var pluginArtifacts *migration.PluginArtifactsReport
 	if len(options) > 1 {
 		return errors.New("at most one plugin import option set is allowed")
 	}
 	if len(options) == 1 {
+		createdBy = options[0].CreatedBy
 		pluginSettings, pluginArtifacts = options[0].PluginSettings, options[0].PluginArtifacts
 	}
 	if err := migration.ValidatePluginArtifactsReport(ctx, w, pluginArtifacts); err != nil {
@@ -126,6 +131,9 @@ func Install(ctx context.Context, plan migration.TargetPlan, report migration.Ta
 		if err != nil {
 			return err
 		}
+		if err := dataformat.Check(n.DataDir); err != nil {
+			return fmt.Errorf("target node %d data format: %w", n.NodeID, err)
+		}
 	}
 	for i, n := range plan.Nodes {
 		if !existing[i] {
@@ -158,6 +166,9 @@ func Install(ctx context.Context, plan migration.TargetPlan, report migration.Ta
 				return err
 			}
 			continue
+		}
+		if err := dataformat.InitializeOwned(n.DataDir, createdBy); err != nil {
+			return fmt.Errorf("target node %d data format: %w", n.NodeID, err)
 		}
 		if err := installNode(ctx, n, l, report, w); err != nil {
 			return fmt.Errorf("target node %d: %w", n.NodeID, err)

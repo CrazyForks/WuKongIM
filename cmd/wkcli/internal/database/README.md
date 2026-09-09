@@ -109,3 +109,21 @@ cluster nodes, create online consistency snapshots, export incremental changes,
 compress the bundle, or include Raft/controller/runtime state. Run it against a
 stopped node, a filesystem snapshot, or a copied node data directory when exact
 source consistency matters.
+
+## Data directory identity
+
+```sh
+wkcli db --data-dir /srv/wukongim/data info
+wkcli db --data-dir /srv/wukongim/data --format json info
+wkcli db --config /etc/wukongim/wukongim.toml info
+```
+
+`info` reads only `DATA-FORMAT.json`; it opens no database or lock and writes
+nothing. Missing directories and malformed/symlink markers fail. Successful
+queries return `registered`, `unregistered`, or `unsupported`; the latter is a
+readable identity, not startup approval. The server rejects unsupported markers
+before writable runtime initialization. Existing unmarked directories are never
+assigned a guessed creator or format. Store path overrides do not identify a node
+root and are rejected by `info`. Configuration/environment/flag precedence is the
+same as other database commands. Full directory copies preserve the marker;
+logical bundles carry records and their own format, not node creation provenance.

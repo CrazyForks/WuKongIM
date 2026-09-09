@@ -2,18 +2,19 @@ package database
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/WuKongIM/WuKongIM/cmd/wkcli/internal/command"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 // NewCommand preserves the database parser's global-flags-before-verb grammar.
 func NewCommand(deps command.Deps) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "db [flags] <query|repl|import|export|diff>",
+		Use:                "db [flags] <info|query|repl|import|export|diff>",
 		Short:              "Inspect, import, export and compare offline databases",
 		DisableFlagParsing: true,
-		ValidArgs:          []string{"query", "repl", "import", "export", "diff"},
+		ValidArgs:          []string{"info", "query", "repl", "import", "export", "diff"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 2 && (args[1] == "--help" || args[1] == "-h") && printVerbHelp(args[0], deps.Stdout) {
 				return nil
@@ -22,7 +23,7 @@ func NewCommand(deps command.Deps) *cobra.Command {
 				cmd.HelpFunc()(cmd, args)
 				return nil
 			}
-			code := runWithStreams(args, deps.Stdin, deps.Stdout, deps.Stderr)
+			code := runWithBuild(args, deps.Stdin, deps.Stdout, deps.Stderr, deps.Build)
 			if code != 0 {
 				return command.Exit{Code: code}
 			}
@@ -38,6 +39,8 @@ func NewCommand(deps command.Deps) *cobra.Command {
 // printVerbHelp describes an operation without opening source or target stores.
 func printVerbHelp(verb string, out io.Writer) bool {
 	switch verb {
+	case "info":
+		fmt.Fprintln(out, "Usage: wkcli db --data-dir /path/to/data [--format json] info\nRead DATA-FORMAT.json without opening the database; old directories remain unregistered.")
 	case "query":
 		fmt.Fprintln(out, "Usage: wkcli db [global flags] query <sql>")
 	case "repl":
