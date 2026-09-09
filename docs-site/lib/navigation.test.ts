@@ -1,3 +1,4 @@
+import { easySdkReleases } from './easy-sdk-version';
 import { describe, expect, test } from 'bun:test';
 import { isValidElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -226,12 +227,12 @@ describe('documentation navigation contract', () => {
     const easy = sdk?.groups.find((group) => group.slug === 'easy');
     const published = getIndexedNavigationEntries('en').map((entry) => entry.url);
     const snapshots = new Map([
-      ['ios/getting-started', 'v1.1.1'],
-      ['android/getting-started', 'v1.0.5'],
-      ['flutter/getting-started', 'v1.1.0'],
-      ['javascript/getting-started', 'v2.0.5'],
-      ['python/getting-started', '0.1.0'],
-      ['csharp/getting-started', '1.0.0'],
+      ['ios/getting-started', `v${easySdkReleases.ios.version}`],
+      ['android/getting-started', `v${easySdkReleases.android.version}`],
+      ['flutter/getting-started', `v${easySdkReleases.flutter.version}`],
+      ['javascript/getting-started', `v${easySdkReleases.javascript.version}`],
+      ['python/getting-started', easySdkReleases.python.version],
+      ['csharp/getting-started', easySdkReleases.csharp.version],
     ]);
 
     expect(easy?.status).toBe('published');
@@ -253,8 +254,8 @@ describe('documentation navigation contract', () => {
         continue;
       }
       if (page.slug === 'rust/getting-started') {
-        expect(page.description.zh).toContain('0.1.0 正式包');
-        expect(page.description.en).toContain('0.1.0');
+        expect(page.description.zh).toContain(`${easySdkReleases.rust.version} 正式包`);
+        expect(page.description.en).toContain(easySdkReleases.rust.version);
         continue;
       }
       if (page.slug === 'cpp/getting-started') {

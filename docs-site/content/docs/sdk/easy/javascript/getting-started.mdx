@@ -1,9 +1,9 @@
 ---
 title: Web 快速接入
-description: 安装固定版本 2.0.5，通过业务后端提供的连接材料完成在线双向收发和退出清理。
+description: 安装固定版本 SDK，通过业务后端提供的连接材料完成在线双向收发和退出清理。
 ---
 
-本教程使用 **2.0.5**，让 Alice 与 Bob 在两个独立客户端中在线收发。连接由 WebSocket JSON-RPC CONNECT 完成鉴权。
+本教程使用 **WK_EASYSDK_JAVASCRIPT_VERSION**，让 Alice 与 Bob 在两个独立客户端中在线收发。连接由 WebSocket JSON-RPC CONNECT 完成鉴权。
 
 ## 1. 准备接入
 
@@ -25,7 +25,7 @@ description: 安装固定版本 2.0.5，通过业务后端提供的连接材料�
 在现有 Vite、Next.js 或其他打包工程中执行：
 
 ```bash
-npm install --save-exact easyjssdk@2.0.5
+npm install --save-exact easyjssdk@WK_EASYSDK_JAVASCRIPT_VERSION
 ```
 
 提交 `package-lock.json`。本教程不使用 CDN 的浮动版本，避免页面刷新后静默更换 SDK。
@@ -203,7 +203,7 @@ Alice 的 Promise 成功只代表发送请求收到了服务端结果。Bob 仍�
 - **页面提示 WebSocket 或编码 API 不存在**：确认目标浏览器与构建环境提供 WebSocket、`TextEncoder`、`TextDecoder`；不要从浏览器路径推断小程序支持。
 - **连接前就被拒绝**：检查 BFF 返回的 WSS 地址、Token 时效、证书、代理 Upgrade 和 Gateway 可达性。
 - **刷新后重复收消息**：不要在每次组件渲染时调用 `on`；保留回调并在卸载时 `off`/`destroy`。
-- **Console 仍出现 Token 或 Payload**：先用锁文件与浏览器 bundle 确认实际打入 `easyjssdk@2.0.5`，再检查应用事件回调、错误处理和采集器是否记录了完整对象。SDK 诊断默认关闭，显式开启时也只应输出脱敏运行元数据；用 npm 正式产物复现并保留低敏证据后再提交问题。
+- **Console 仍出现 Token 或 Payload**：先用锁文件与浏览器 bundle 确认实际打入 `easyjssdk@WK_EASYSDK_JAVASCRIPT_VERSION`，再检查应用事件回调、错误处理和采集器是否记录了完整对象。SDK 诊断默认关闭，显式开启时也只应输出脱敏运行元数据；用 npm 正式产物复现并保留低敏证据后再提交问题。
 
 ## 下一步
 

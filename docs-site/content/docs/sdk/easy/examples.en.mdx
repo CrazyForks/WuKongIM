@@ -50,7 +50,7 @@ Prepare the development tools for your platform. Source examples below use pinne
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-iOS.git
 cd WuKongEasySDK-iOS
-git checkout v1.1.1
+git checkout WK_EASYSDK_IOS_SOURCE_REF
 swift build -c release
 cd Examples/WuKongIMExample-Unified
 ./build.sh macos
@@ -72,7 +72,7 @@ You can instead start the macOS variant with `./build.sh macos --run`. The iOS A
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-Android.git
 cd WuKongEasySDK-Android
-git checkout v1.0.5
+git checkout WK_EASYSDK_ANDROID_SOURCE_REF
 ./gradlew :example:assembleDebug
 ./gradlew :example:installDebug
 ```
@@ -86,7 +86,7 @@ Launch the `example` on an API 21+ device or emulator. An Android Emulator reach
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-Flutter.git
 cd WuKongEasySDK-Flutter
-git checkout v1.1.0
+git checkout WK_EASYSDK_FLUTTER_SOURCE_REF
 flutter pub get
 cd example
 flutter pub get
@@ -103,7 +103,7 @@ Run every target you intend to ship. An iOS Simulator result cannot stand in for
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-JS.git
 cd WuKongEasySDK-JS
-git checkout v2.0.5
+git checkout WK_EASYSDK_JAVASCRIPT_SOURCE_REF
 npm ci
 npm run build
 python3 -m http.server 8080
@@ -115,10 +115,10 @@ Open `http://127.0.0.1:8080/example/`. Use two isolated browser contexts for Ali
 
 ### Rust [#rust]
 
-Requires Rust 1.86+. Check out source matching crates.io 0.1.0:
+Requires Rust 1.86+. Check out source matching crates.io WK_EASYSDK_RUST_VERSION:
 
 ```bash
-git clone --branch v0.1.0 --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Rust.git
+git clone --branch WK_EASYSDK_RUST_TAG --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Rust.git
 cd WuKongEasySDK-Rust
 cargo build --locked --example chat
 ```
@@ -129,7 +129,7 @@ In two terminals set `WK_WS_URL`, `WK_UID`, `WK_TOKEN`, and `WK_PEER_UID`, then 
 
 ### C# [#csharp]
 
-Create `MyChat` with the complete `Program.cs` in the [C# quickstart](/en/sdk/easy/csharp/getting-started) and install public NuGet 1.0.0. Set `WUKONGIM_WS_URL`, `WUKONGIM_UID`, and `WUKONGIM_TOKEN` in each terminal:
+Create `MyChat` with the complete `Program.cs` in the [C# quickstart](/en/sdk/easy/csharp/getting-started) and install public NuGet WK_EASYSDK_CSHARP_VERSION. Set `WUKONGIM_WS_URL`, `WUKONGIM_UID`, and `WUKONGIM_TOKEN` in each terminal:
 
 ```bash
 # Alice
@@ -155,8 +155,8 @@ With `my_app`, wait for both clients to connect, press Enter to send, then Enter
 Run in a Python 3.11+ virtual environment:
 
 ```bash
-python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==0.1.0"
-git clone --branch v0.1.0 --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
+python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==WK_EASYSDK_PYTHON_VERSION"
+git clone --branch WK_EASYSDK_PYTHON_TAG --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
 python WuKongEasySDK-Python/examples/chat.py
 ```
 

@@ -3,7 +3,7 @@ title: Python 快速接入
 description: 按准备、安装、连接、收发和清理顺序完成首次接入。
 ---
 
-使用 Python 3.11+、asyncio 和 PyPI **0.1.0** 完成在线收发。每个客户端属于一个事件循环。
+使用 Python 3.11+、asyncio 和 PyPI **WK_EASYSDK_PYTHON_VERSION** 完成在线收发。每个客户端属于一个事件循环。
 
 ## 1. 准备接入
 
@@ -15,12 +15,12 @@ description: 按准备、安装、连接、收发和清理顺序完成首次接�
 
 ## 2. 安装 SDK
 
-本文使用 [PyPI `wukong-easy-sdk==0.1.0`](https://pypi.org/project/wukong-easy-sdk/0.1.0/)，要求 Python 3.11+。分发名是 `wukong-easy-sdk`，导入名是 `wukong_easy_sdk`。
+本文使用 [PyPI `wukong-easy-sdk==WK_EASYSDK_PYTHON_VERSION`](https://pypi.org/project/wukong-easy-sdk/WK_EASYSDK_PYTHON_VERSION/)，要求 Python 3.11+。分发名是 `wukong-easy-sdk`，导入名是 `wukong_easy_sdk`。
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==0.1.0"
+python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==WK_EASYSDK_PYTHON_VERSION"
 ```
 
 Windows PowerShell 将激活命令替换为 `.venv\Scripts\Activate.ps1`。运行依赖为 `websockets>=15.0.1,<18`，仓库 `uv.lock` 固定开发与验证依赖。
@@ -75,7 +75,7 @@ Python 参数使用 snake_case，消息和结果字典保留 JS 的 camelCase：
 下载与安装包一致的示例源码，继续使用当前虚拟环境：
 
 ```sh
-git clone --branch v0.1.0 --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
+git clone --branch WK_EASYSDK_PYTHON_TAG --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
 ```
 
 两个终端分别设置自己的 `WKIM_UID`、`WKIM_TOKEN`、`WKIM_PEER` 和可选的 `WKIM_URL`，运行：

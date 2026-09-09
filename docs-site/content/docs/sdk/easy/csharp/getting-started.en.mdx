@@ -3,7 +3,7 @@ title: C# quickstart
 description: Prepare, install, connect, exchange the first messages, and clean up.
 ---
 
-Use .NET 8+ and NuGet **1.0.0** to exchange online messages between two independent console clients.
+Use .NET 8+ and NuGet **WK_EASYSDK_CSHARP_VERSION** to exchange online messages between two independent console clients.
 
 ## 1. Prepare
 
@@ -32,7 +32,7 @@ Use [the shared example setup](/en/sdk/easy/examples) for the server, test accou
 
 ```bash
 dotnet new console -n MyChat --framework net8.0
-dotnet add MyChat/MyChat.csproj package WuKongEasySDK --version 1.0.0 --source https://api.nuget.org/v3/index.json
+dotnet add MyChat/MyChat.csproj package WuKongEasySDK --version WK_EASYSDK_CSHARP_VERSION --source https://api.nuget.org/v3/index.json
 ```
 
 ## 3. Connect and listen
@@ -144,7 +144,7 @@ The SDK does not queue offline messages or automatically resend SEND. A timeout,
 
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-CSharp.git
-git -C WuKongEasySDK-CSharp checkout 02ea7d60cd94feef1996f41bca35ffc3b8e18ea6
+git -C WuKongEasySDK-CSharp checkout WK_EASYSDK_CSHARP_SOURCE_REF
 dotnet new console -n MyChat --framework net8.0
 dotnet add MyChat/MyChat.csproj reference WuKongEasySDK-CSharp/src/WuKongEasySDK/WuKongEasySDK.csproj
 ```
@@ -156,7 +156,7 @@ For a local NuGet installation, build the package from that pinned checkout:
 ```bash
 cd WuKongEasySDK-CSharp
 dotnet pack src/WuKongEasySDK -c Release -o artifacts
-dotnet add ../MyChat/MyChat.csproj package WuKongEasySDK --version 1.0.0 --source ./artifacts
+dotnet add ../MyChat/MyChat.csproj package WuKongEasySDK --version WK_EASYSDK_CSHARP_VERSION --source ./artifacts
 ```
 
 Choose one of the public package, project reference, or local package. Do not combine them. Here, `--source ./artifacts` is the local feed you just built.

@@ -12,6 +12,8 @@ move those entries into a version section named for that exact tag.
 
 ### 📚 Documentation / 文档
 
+- Keep EasySDK tutorial versions and installation pins in one shared manifest so compatible upgrades synchronize bilingual instructions and download links. / EasySDK 教程版本及安装引用集中到统一清单，兼容升级可同步中英文安装说明和下载链接。
+
 - Document released wkcli installation, paired server/CLI version checks, and installed-command examples in both languages; complete the migration tool navigation. / 补齐中英文 wkcli 发布版安装、服务端与工具版本核对、已安装命令示例及迁移工具导航。
 
 ### 🐛 Bug Fixes / 问题修复

@@ -25,16 +25,18 @@ buffers; they are not persistent history or durable deduplication.
 
 ## Tutorial versions
 
-| Platform | Version | Default distribution |
-| --- | --- | --- |
-| iOS | 1.1.1 | Swift Package Manager |
-| Android | 1.0.5 | Maven Central |
-| Flutter | 1.1.0 | pub.dev |
-| Web | 2.0.5 | npm |
-| Rust | 0.1.0 | crates.io |
-| C# | 1.0.0 | NuGet |
-| C++ | 0.1.0 | WuKongIM vcpkg Git registry |
-| Python | 0.1.0 | PyPI |
+The sole current-version manifest is `lib/easy-sdk-releases.json`. It selects
+one exact released version per platform, with independent source and vcpkg pins
+where required. Public MDX uses `WK_EASYSDK_<PLATFORM>_VERSION`, `_TAG`, or
+`_SOURCE_REF`; the build resolves prose, code, links and literal MDX attributes.
+Frontmatter stays version-neutral; navigation reads the same manifest.
+
+Update a selection only after checking the released package against its tutorial,
+including installation, APIs, cleanup, platform requirements and known limits.
+Compatible releases need only a manifest edit. C++ registry, tool, CMake and
+source pins must be reviewed independently. This manifest does not attest that a
+new package passed an older live matrix, and this phase does not auto-discover or
+auto-publish SDK releases. See the README for the maintenance workflow.
 
 Check examples against their released package or pinned source. Source examples
 are not package-consumer verification. Web 2.0.5 includes the handshake-failure

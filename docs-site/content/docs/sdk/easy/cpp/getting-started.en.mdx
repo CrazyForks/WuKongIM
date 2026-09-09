@@ -3,7 +3,7 @@ title: C++ quickstart
 description: Prepare, install, connect, exchange the first messages, and clean up.
 ---
 
-Use C++17, CMake, and WuKongEasySDK **0.1.0** for online messaging. The main path uses the WuKongIM-maintained vcpkg registry; alternative installation methods follow the tutorial.
+Use C++17, CMake, and WuKongEasySDK **WK_EASYSDK_CPP_VERSION** for online messaging. The main path uses the WuKongIM-maintained vcpkg registry; alternative installation methods follow the tutorial.
 
 ## 1. Prepare
 
@@ -19,7 +19,7 @@ Install [vcpkg](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started)
 and set `VCPKG_ROOT` to its directory. Keep Git, CMake 3.20+ and a C++17 compiler
 available (Visual Studio 2022 on Windows, Xcode command-line tools on macOS,
 GCC/Clang on Linux). The tested vcpkg revision is
-`04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4`.
+`WK_EASYSDK_CPP_VCPKG_BASELINE`.
 
 In your application directory, create `vcpkg.json`:
 
@@ -34,13 +34,13 @@ In your application directory, create `vcpkg.json`:
   "default-registry": {
     "kind": "git",
     "repository": "https://github.com/microsoft/vcpkg",
-    "baseline": "04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4"
+    "baseline": "WK_EASYSDK_CPP_VCPKG_BASELINE"
   },
   "registries": [
     {
       "kind": "git",
       "repository": "https://github.com/WuKongIM/WuKongEasySDK-CPP.git",
-      "baseline": "63ec99d34c7605b64e2173d201639042e0e49de9",
+      "baseline": "WK_EASYSDK_CPP_REGISTRY_BASELINE",
       "packages": [
         "wukong-easy-sdk"
       ]
@@ -54,7 +54,7 @@ Add the following `CMakeLists.txt` next to your own `main.cpp`:
 ```cmake
 cmake_minimum_required(VERSION 3.20)
 project(my_app LANGUAGES CXX)
-find_package(WuKongEasySDK 0.1 CONFIG REQUIRED)
+find_package(WuKongEasySDK WK_EASYSDK_CPP_CMAKE_VERSION CONFIG REQUIRED)
 add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE WuKongEasySDK::WuKongEasySDK)
 ```
@@ -70,7 +70,7 @@ DLLs copied beside the application when using `x64-windows`.
 This public Git registry is maintained by WuKongIM in this repository. It is
 not Microsoft's curated catalog: copy the registry configuration as well as
 the dependency manifest. SDK source is pinned to
-`3e367a908f42385ab9306f9708b7456399cace7d`, independently of the registry baseline.
+`WK_EASYSDK_CPP_SOURCE_REF`, independently of the registry baseline.
 Commit both JSON files to reproduce dependency selection. Existing projects
 should merge these entries into their manifests instead of overwriting them.
 
@@ -188,7 +188,7 @@ Receive `id`, `type`, millisecond-based `timestamp`, and `data` through `WKIMEve
 
 ## Alternative installation: prebuilt archives
 
-To skip dependency compilation, download the matching ZIP and `SHA256SUMS` from [C++ SDK v0.1.0 Release](https://github.com/WuKongIM/WuKongEasySDK-CPP/releases/tag/v0.1.0), verify its SHA-256 and extract it. You only need CMake 3.20+ and a compatible C++ development environment; no separate vcpkg installation is required.
+To skip dependency compilation, download the matching ZIP and `SHA256SUMS` from [C++ SDK WK_EASYSDK_CPP_TAG Release](https://github.com/WuKongIM/WuKongEasySDK-CPP/releases/tag/WK_EASYSDK_CPP_TAG), verify its SHA-256 and extract it. You only need CMake 3.20+ and a compatible C++ development environment; no separate vcpkg installation is required.
 
 | Archive suffix | Consumer environment |
 | --- | --- |
@@ -196,7 +196,7 @@ To skip dependency compilation, download the matching ZIP and `SHA256SUMS` from 
 | `macos-arm64-appleclang.zip` | macOS 14+ arm64, Apple Clang, libc++ |
 | `windows-x64-msvc143-md.zip` | Windows x64, Visual Studio 2022 v143; Release `/MD`, Debug `/MDd` |
 
-Names start with `WuKongEasySDK-CPP-0.1.0-`. Each archive includes Debug/Release static SDK libraries, Boost/JSON headers, OpenSSL libraries, licenses and a minimal example. From the extracted directory:
+Names start with `WuKongEasySDK-CPP-WK_EASYSDK_CPP_VERSION-`. Each archive includes Debug/Release static SDK libraries, Boost/JSON headers, OpenSSL libraries, licenses and a minimal example. From the extracted directory:
 
 ```sh
 # Linux / macOS
@@ -227,7 +227,7 @@ Requirements: CMake 3.20+, a C++17 compiler, Boost 1.74+, OpenSSL 1.1.1+, and nl
 ```sh
 git clone https://github.com/WuKongIM/WuKongEasySDK-CPP.git
 cd WuKongEasySDK-CPP
-git checkout 3e367a908f42385ab9306f9708b7456399cace7d
+git checkout WK_EASYSDK_CPP_SOURCE_REF
 
 # macOS
 brew install cmake boost openssl@3 nlohmann-json
@@ -244,7 +244,7 @@ Run only the dependency command for your platform. Without an installed JSON pac
 Windows uses Visual Studio 2022 and vcpkg; the repository's `vcpkg.json` pins the baseline:
 
 ```powershell
-git -C "$env:VCPKG_ROOT" fetch origin 04a9d8e5212d01ee1dd9478eadd9caade4f8b0d4
+git -C "$env:VCPKG_ROOT" fetch origin WK_EASYSDK_CPP_VCPKG_BASELINE
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
 cmake --build build --config Release --parallel 2
 ctest --test-dir build -C Release --output-on-failure
@@ -257,7 +257,7 @@ add_subdirectory(external/WuKongEasySDK-CPP)
 target_link_libraries(my_app PRIVATE WuKongEasySDK::WuKongEasySDK)
 ```
 
-Alternatively, run `cmake --install build --config Release --prefix /path/to/sdk-prefix`, use `find_package(WuKongEasySDK 0.1 CONFIG REQUIRED)` downstream, and point `CMAKE_PREFIX_PATH` at the installation. The static-library export preserves its dependencies; Windows distribution must include any required dynamic dependencies.
+Alternatively, run `cmake --install build --config Release --prefix /path/to/sdk-prefix`, use `find_package(WuKongEasySDK WK_EASYSDK_CPP_CMAKE_VERSION CONFIG REQUIRED)` downstream, and point `CMAKE_PREFIX_PATH` at the installation. The static-library export preserves its dependencies; Windows distribution must include any required dynamic dependencies.
 
 ## Run the archive or source chat example
 

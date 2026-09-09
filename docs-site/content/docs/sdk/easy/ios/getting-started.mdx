@@ -1,9 +1,9 @@
 ---
 title: iOS 快速接入
-description: 安装固定版本 1.1.1，通过业务后端提供的连接材料完成在线双向收发和退出清理。
+description: 安装固定版本 SDK，通过业务后端提供的连接材料完成在线双向收发和退出清理。
 ---
 
-本教程使用 **1.1.1**，让 Alice 与 Bob 在两个独立客户端中在线收发。连接由 WebSocket JSON-RPC CONNECT 完成鉴权。
+本教程使用 **WK_EASYSDK_IOS_VERSION**，让 Alice 与 Bob 在两个独立客户端中在线收发。连接由 WebSocket JSON-RPC CONNECT 完成鉴权。
 
 ## 1. 准备接入
 
@@ -30,13 +30,13 @@ description: 安装固定版本 1.1.1，通过业务后端提供的连接材料�
 https://github.com/WuKongIM/WuKongEasySDK-iOS.git
 ```
 
-Dependency Rule 选择 **Exact Version**，填写 `1.1.1`。如果项目维护 `Package.swift`，使用精确规则：
+Dependency Rule 选择 **Exact Version**，填写 `WK_EASYSDK_IOS_VERSION`。如果项目维护 `Package.swift`，使用精确规则：
 
 ```swift
 dependencies: [
     .package(
         url: "https://github.com/WuKongIM/WuKongEasySDK-iOS.git",
-        exact: "1.1.1"
+        exact: "WK_EASYSDK_IOS_VERSION"
     )
 ]
 ```
@@ -195,7 +195,7 @@ print("SEND completed")
 
 ```ruby
 target 'YourApp' do
-  pod 'WuKongEasySDK', '1.1.1'
+  pod 'WuKongEasySDK', 'WK_EASYSDK_IOS_VERSION'
 end
 ```
 
