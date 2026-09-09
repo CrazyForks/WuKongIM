@@ -21,6 +21,7 @@ import {
   resolveReleaseVersion,
 } from '../lib/release-version';
 import { canonicalUrl, isPreviewBuild, siteUrl } from '../lib/shared';
+import { easySdkPlatforms, easySdkReleases } from '../lib/easy-sdk-version';
 import {
   RSC_REFRESH_ORIGIN,
   RSC_REFRESH_URLS_FILE,
@@ -876,6 +877,24 @@ export async function checkStaticOutput() {
   }
 
   const searchPayload = await text('api/search');
+  for (const [name, output] of [['llms.txt', llmsIndex], ['llms-full.txt', llmsFull], ['api/search', searchPayload]]) {
+    if (output.includes('WK_EASYSDK_')) throw new Error(`${name} contains unresolved EasySDK metadata`);
+  }
+  for (const locale of locales) {
+    for (const slug of ['', 'examples', ...easySdkPlatforms.map((platform) => `${platform}/getting-started`)]) {
+      const route = `${locale}/sdk/easy${slug ? `/${slug}` : ''}`;
+      const markdown = await text(`llms.mdx/${route}/content.md`);
+      if (markdown.includes('WK_EASYSDK_')) throw new Error(`${route} Markdown contains unresolved EasySDK metadata`);
+      const html = visibleHtml(await text(`${route}/index.html`));
+      for (const platform of easySdkPlatforms) {
+        if (slug !== '' && slug !== `${platform}/getting-started`) continue;
+        const version = easySdkReleases[platform].version;
+        if (!html.includes(version) || !markdown.includes(version)) {
+          throw new Error(`${route} does not render the selected ${platform} version ${version}`);
+        }
+      }
+    }
+  }
   const search = JSON.parse(searchPayload) as {
     type: string;
     data: Record<
@@ -1062,6 +1081,12 @@ export async function checkStaticOutput() {
   }
 
   const { htmlPages, outputPaths, staticRoutePayloads } = await loadOutputInventory();
+  for (const { filePath, html } of htmlPages) {
+    if (html.includes('WK_EASYSDK_')) throw new Error(`${filePath} contains unresolved EasySDK metadata`);
+  }
+  for (const [filePath, payload] of staticRoutePayloads) {
+    if (payload.includes('WK_EASYSDK_')) throw new Error(`${filePath} contains unresolved EasySDK metadata`);
+  }
   const staticClientRoutes = htmlPages
     .filter(
       (page) =>

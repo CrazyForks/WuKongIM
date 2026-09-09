@@ -1,0 +1,11 @@
+{
+  "name": "wukongim-easy-sdk-docs-release-smoke",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.63.0",
+    "typescript": "6.0.3"
+  }
+}

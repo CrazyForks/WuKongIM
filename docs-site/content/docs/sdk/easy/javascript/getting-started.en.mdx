@@ -1,9 +1,9 @@
 ---
 title: Web quickstart
-description: Install version 2.0.5, obtain credentials from your backend, exchange online messages, and clean up.
+description: Install the pinned SDK version, obtain credentials from your backend, exchange online messages, and clean up.
 ---
 
-This tutorial uses **2.0.5** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
+This tutorial uses **WK_EASYSDK_JAVASCRIPT_VERSION** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
 
 ## 1. Prepare
 
@@ -25,7 +25,7 @@ The default device category is **WEB `1`**. Store the Token with the same `devic
 Run this in an existing Vite, Next.js, or other bundled application:
 
 ```bash
-npm install --save-exact easyjssdk@2.0.5
+npm install --save-exact easyjssdk@WK_EASYSDK_JAVASCRIPT_VERSION
 ```
 
 Commit `package-lock.json`. This tutorial does not use a floating CDN version that could silently replace the SDK after a page refresh.
@@ -203,7 +203,7 @@ Call `chat.stop()` on logout, application unmount, or page exit. It removes call
 - **The page says WebSocket or encoding APIs are missing:** confirm the browser and build environment provide WebSocket, `TextEncoder`, and `TextDecoder`; do not infer Mini Program support from the browser path.
 - **Connection is rejected before ready:** inspect the BFF-returned WSS address, token lifetime, certificate, proxy Upgrade, and Gateway reachability.
 - **Messages duplicate after refresh:** do not call `on` during every component render; retain callbacks and call `off`/`destroy` during unmount.
-- **The console still contains a token or payload:** first use the lockfile and browser bundle to confirm that `easyjssdk@2.0.5` is actually shipped, then inspect application event callbacks, error handling, and collectors for complete-object logging. SDK diagnostics are off by default and should emit only sanitized operational metadata when explicitly enabled. Reproduce with the npm artifact and retain only low-sensitivity evidence before filing an issue.
+- **The console still contains a token or payload:** first use the lockfile and browser bundle to confirm that `easyjssdk@WK_EASYSDK_JAVASCRIPT_VERSION` is actually shipped, then inspect application event callbacks, error handling, and collectors for complete-object logging. SDK diagnostics are off by default and should emit only sanitized operational metadata when explicitly enabled. Reproduce with the npm artifact and retain only low-sensitivity evidence before filing an issue.
 - **You need an executable Web scenario path:** use the [WuKongIMJSSDK Web tutorial](/en/sdk/javascript), which has the site's protected verification flow, and review the current build and runtime boundaries under [API Versions & Compatibility](/en/api/compatibility). Do not mix method names between the two SDKs.
 
 ## Next

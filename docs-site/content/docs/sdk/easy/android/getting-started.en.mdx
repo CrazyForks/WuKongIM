@@ -1,9 +1,9 @@
 ---
 title: Android quickstart
-description: Install version 1.0.5, obtain credentials from your backend, exchange online messages, and clean up.
+description: Install the pinned SDK version, obtain credentials from your backend, exchange online messages, and clean up.
 ---
 
-This tutorial uses **1.0.5** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
+This tutorial uses **WK_EASYSDK_ANDROID_VERSION** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
 
 ## 1. Prepare
 
@@ -26,7 +26,7 @@ Add this to the application module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.githubim:easysdk-android:1.0.5")
+    implementation("com.githubim:easysdk-android:WK_EASYSDK_ANDROID_VERSION")
 }
 ```
 
@@ -34,7 +34,7 @@ The equivalent Groovy DSL is:
 
 ```groovy
 dependencies {
-    implementation 'com.githubim:easysdk-android:1.0.5'
+    implementation 'com.githubim:easysdk-android:WK_EASYSDK_ANDROID_VERSION'
 }
 ```
 
@@ -68,7 +68,7 @@ data class IMBootstrap(
 
 The product backend authenticates the current product user and selects a WebSocket address. The Android client receives only its own connection material and no Product HTTP management credential.
 
-Android EasySDK is a process singleton, and `v1.0.5` cannot be initialized a second time with another configuration. This example fits a minimal run with one UID per process. A production application that switches accounts must first design and test a complete logout strategy around this limitation.
+Android EasySDK is a process singleton, and `WK_EASYSDK_ANDROID_TAG` cannot be initialized a second time with another configuration. This example fits a minimal run with one UID per process. A production application that switches accounts must first design and test a complete logout strategy around this limitation.
 
 ```kotlin
 import android.os.Bundle
@@ -144,7 +144,7 @@ class ChatActivity : AppCompatActivity() {
                     current.deviceFlag == config.deviceFlag &&
                     current.debugLogging == config.debugLogging
             ) {
-                "WuKongEasySDK v1.0.5 cannot apply changed identity or configuration; " +
+                "WuKongEasySDK WK_EASYSDK_ANDROID_TAG cannot apply changed identity or configuration; " +
                     "stop and restart the process or upgrade the SDK"
             }
         }
@@ -185,7 +185,7 @@ class ChatActivity : AppCompatActivity() {
 }
 ```
 
-Listeners are registered only after `init`, and the same object references are retained for `removeEventListener`. The outer `withTimeout` bounds the complete wait at 20 seconds and disconnects after failure; SDK connection and request limits are 15 seconds, with at most 5 reconnect attempts. On Activity recreation, the page reads `isConnected()` instead of waiting for a `CONNECT` event that will not be replayed. A changed identity, token, URL, or connection setting stops explicitly rather than silently retaining a stale value. The example sets `debugLogging(false)` explicitly. Maven `1.0.5` applies that master gate to protocol-parsing and event-dispatch diagnostics and redacts public model strings. A production application normally lets an Application-scoped connection manager own the SDK while Activities or Fragments subscribe only to UI events. The screen-level owner above makes the minimal lifecycle visible.
+Listeners are registered only after `init`, and the same object references are retained for `removeEventListener`. The outer `withTimeout` bounds the complete wait at 20 seconds and disconnects after failure; SDK connection and request limits are 15 seconds, with at most 5 reconnect attempts. On Activity recreation, the page reads `isConnected()` instead of waiting for a `CONNECT` event that will not be replayed. A changed identity, token, URL, or connection setting stops explicitly rather than silently retaining a stale value. The example sets `debugLogging(false)` explicitly. Maven `WK_EASYSDK_ANDROID_VERSION` applies that master gate to protocol-parsing and event-dispatch diagnostics and redacts public model strings. A production application normally lets an Application-scoped connection manager own the SDK while Activities or Fragments subscribe only to UI events. The screen-level owner above makes the minimal lifecycle visible.
 
 ## 4. Exchange the first message
 
@@ -229,15 +229,15 @@ Because the SDK is a process singleton, use two devices, two emulators, or two i
 
 ## 5. Clean up
 
-`onDestroy()` removes this page’s listeners and disconnects when the Activity finishes. An application connection belongs to the Application. Version `1.0.5` cannot reinitialize with another identity or configuration; never silently reuse an old Token.
+`onDestroy()` removes this page’s listeners and disconnects when the Activity finishes. An application connection belongs to the Application. Version `WK_EASYSDK_ANDROID_VERSION` cannot reinitialize with another identity or configuration; never silently reuse an old Token.
 
 ## 6. Troubleshooting
 
 - **`SDK is not initialized`:** preserve the `init → addEventListener → connect` order.
-- **The same UID gets a refreshed token or route and configuration changes:** `v1.0.5` has no public reset API. Stop explicitly and restart the process; do not continue with a stale token or URL.
+- **The same UID gets a refreshed token or route and configuration changes:** `WK_EASYSDK_ANDROID_TAG` has no public reset API. Stop explicitly and restart the process; do not continue with a stale token or URL.
 - **The emulator connects but a physical device does not:** confirm that the address is reachable outside the host or container and have the product backend return the device-reachable WSS ingress.
 - **CONNECT, SEND, or RECVACK parsing fails:** confirm the server includes the EasySDK JSON-RPC compatibility implementation. The current server accepts snake_case fields and the README-aligned Android JSON text-string payload, as well as JSON objects and Base64 payloads, and returns snake_case results for Android. Use APP `0`, WEB `1`, and PC `2`; do not carry forward older literals.
-- **Raw JSON or `Params` still appears in Logcat with `debugLogging` disabled:** first confirm Gradle resolved `1.0.5`, clean the old build, then use a non-production canary to distinguish SDK output from application or third-party network logs. Stop the rollout and file a minimal reproduction if the Release artifact still exposes that canary.
+- **Raw JSON or `Params` still appears in Logcat with `debugLogging` disabled:** first confirm Gradle resolved `WK_EASYSDK_ANDROID_VERSION`, clean the old build, then use a non-production canary to distinguish SDK output from application or third-party network logs. Stop the rollout and file a minimal reproduction if the Release artifact still exposes that canary.
 - **Messages are duplicated:** prevent repeated listener registration and deduplicate by `messageId`.
 
 ## Next

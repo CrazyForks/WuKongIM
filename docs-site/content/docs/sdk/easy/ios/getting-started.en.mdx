@@ -1,9 +1,9 @@
 ---
 title: iOS quickstart
-description: Install version 1.1.1, obtain credentials from your backend, exchange online messages, and clean up.
+description: Install the pinned SDK version, obtain credentials from your backend, exchange online messages, and clean up.
 ---
 
-This tutorial uses **1.1.1** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
+This tutorial uses **WK_EASYSDK_IOS_VERSION** to exchange online messages between Alice and Bob in separate clients. WebSocket JSON-RPC CONNECT authenticates the connection.
 
 ## 1. Prepare
 
@@ -30,13 +30,13 @@ In Xcode, choose **File → Add Package Dependencies** and enter:
 https://github.com/WuKongIM/WuKongEasySDK-iOS.git
 ```
 
-Choose **Exact Version** and enter `1.1.1`. If the project owns a `Package.swift`, use an exact rule:
+Choose **Exact Version** and enter `WK_EASYSDK_IOS_VERSION`. If the project owns a `Package.swift`, use an exact rule:
 
 ```swift
 dependencies: [
     .package(
         url: "https://github.com/WuKongIM/WuKongEasySDK-iOS.git",
-        exact: "1.1.1"
+        exact: "WK_EASYSDK_IOS_VERSION"
     )
 ]
 ```
@@ -195,7 +195,7 @@ Call `chatClient.stop()` when signing out or destroying the connection owner. It
 
 ```ruby
 target 'YourApp' do
-  pod 'WuKongEasySDK', '1.1.1'
+  pod 'WuKongEasySDK', 'WK_EASYSDK_IOS_VERSION'
 end
 ```
 

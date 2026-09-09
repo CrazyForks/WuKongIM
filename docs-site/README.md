@@ -47,6 +47,27 @@ runs its fast unit tests from the documentation-site root and is part of `verify
   learning order, and writing contract.
 - `EASY_SDK_DOCUMENTATION_SPEC.md` defines the eight EasySDK quickstarts,
   example-first learning path, and separate engineering validation history.
+- `lib/easy-sdk-releases.json` is the sole current EasySDK version manifest.
+  After validating a compatible released package against its tutorial, update
+  that platform's `version`. Source checkouts default to `v<version>`; optional
+  `sourceRevision` pins, and C++ `registryBaseline`, `vcpkgBaseline`, and
+  `cmakeVersion`, must be reviewed independently. A version edit is not evidence
+  of a successful SDK package or live messaging test.
+  MDX uses `WK_EASYSDK_<PLATFORM>_VERSION`, `_TAG`, and `_SOURCE_REF` (Web uses
+  `JAVASCRIPT`). C++ also has `_REGISTRY_BASELINE`, `_VCPKG_BASELINE`, and
+  `_CMAKE_VERSION`. The remark plugin resolves prose, code, Markdown links and
+  literal MDX attributes before HTML, search and Markdown generation. Keep
+  frontmatter version-neutral and use literal attributes rather than JavaScript
+  expressions for these tokens. Navigation reads the same manifest.
+  Run `bun run navigation:write` and `bun run verify` after updating it; generated
+  navigation is not edited by hand. Unknown tokens and unresolved output fail
+  verification. API, lifecycle, platform or installation changes still require
+  corresponding tutorial changes. Historical reports, fix-introduction versions
+  and server commits remain literal evidence. The Web SDK pilot discovers npm
+  releases, verifies the tutorial and proposes a PR through
+  [`easy-sdk-web-docs-sync.yml`](../.github/workflows/easy-sdk-web-docs-sync.yml);
+  see the [maintenance runbook](scripts/easy-sdk-sync/README.md). Other platforms
+  still require manual package validation and selection.
 - `redirects.json` records public route migrations. Removed pages must not be
   retained as duplicate MDX content.
 - `NAVIGATION.md` is generated. Refresh it with `bun run navigation:write`.

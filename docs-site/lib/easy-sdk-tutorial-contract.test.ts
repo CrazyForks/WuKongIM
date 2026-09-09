@@ -1,18 +1,19 @@
+import { easySdkReleases, resolveEasySdkText } from './easy-sdk-version';
 import { describe, expect, test } from 'bun:test';
 import { getIndexedNavigationEntries } from './navigation';
 
 const root = new URL('../content/docs/sdk/easy/', import.meta.url);
 const archivePath = 'docs/superpowers/reports/2026-09-08-easysdk-validation-history.md';
-const content = (name: string) => Bun.file(new URL(name, root)).text();
+const content = async (name: string) => resolveEasySdkText(await Bun.file(new URL(name, root)).text());
 const platforms = [
-  { key: 'ios', install: 'exact: "1.1.1"', api: ['WuKongConfig', 'sdk.onMessage', 'sdk.connect()', 'sdk.send('], cleanup: ['sdk.removeListener', 'sdk.disconnect()'], bounds: ['connectionTimeout: 15', 'requestTimeout: 15'] },
-  { key: 'android', install: 'implementation("com.githubim:easysdk-android:1.0.5")', api: ['WuKongConfig.Builder()', 'addEventListener', 'easySDK.connect()', 'easySDK.send('], cleanup: ['removeEventListener', 'easySDK.disconnect()'], bounds: ['withTimeout(20_000)', '.connectionTimeout(15_000)'] },
-  { key: 'flutter', install: 'wukong_easy_sdk: 1.1.0', api: ['WuKongEasySDK.getInstance()', 'addEventListener', 'easySDK.connect()', 'easySDK.send('], cleanup: ['removeEventListener', 'easySDK.disconnect()', 'easySDK.dispose()'], bounds: ['Duration(seconds: 20)', '.timeout('] },
-  { key: 'javascript', install: 'npm install --save-exact easyjssdk@2.0.5', api: ['WKIM.init', 'im.on', 'im.connect()', 'im.send('], cleanup: ['im.off', 'im.destroy()'], bounds: ['Promise.race', '10_000'] },
-  { key: 'rust', install: 'wukong-easy-sdk = "=0.1.0"', api: ['client.subscribe()', 'client.connect().await', 'client.send(', 'Event::Message'], cleanup: ['client.destroy().await', 'listener.abort()'], bounds: ['Backpressure', 'Lagged'] },
-  { key: 'csharp', install: 'package WuKongEasySDK --version 1.0.0 --source https://api.nuget.org/v3/index.json', api: ['new WKIM', 'im.Message +=', 'im.ConnectAsync()', 'im.SendAsync('], cleanup: ['im.Message -=', 'await using', 'im.DisconnectAsync()'], bounds: ['TimeSpan.FromSeconds(10)', 'WKIMBackpressureException'] },
-  { key: 'cpp', install: 'find_package(WuKongEasySDK 0.1 CONFIG REQUIRED)', api: ['im.on(', 'im.connect().get()', 'im.send('], cleanup: ['im.off(', 'im.destroy().get()'], bounds: ['ErrorCode::QueueFull', 'std::chrono::seconds(15)'] },
-  { key: 'python', install: '"wukong-easy-sdk==0.1.0"', api: ['WKIM.init', 'im.on(', 'async with im:', 'await im.send('], cleanup: ['im.off(', 'destroy()'], bounds: ['ErrorCode.QUEUE_FULL', 'client_msg_no'] },
+  { key: 'ios', install: `exact: "${easySdkReleases.ios.version}"`, api: ['WuKongConfig', 'sdk.onMessage', 'sdk.connect()', 'sdk.send('], cleanup: ['sdk.removeListener', 'sdk.disconnect()'], bounds: ['connectionTimeout: 15', 'requestTimeout: 15'] },
+  { key: 'android', install: `implementation("com.githubim:easysdk-android:${easySdkReleases.android.version}")`, api: ['WuKongConfig.Builder()', 'addEventListener', 'easySDK.connect()', 'easySDK.send('], cleanup: ['removeEventListener', 'easySDK.disconnect()'], bounds: ['withTimeout(20_000)', '.connectionTimeout(15_000)'] },
+  { key: 'flutter', install: `wukong_easy_sdk: ${easySdkReleases.flutter.version}`, api: ['WuKongEasySDK.getInstance()', 'addEventListener', 'easySDK.connect()', 'easySDK.send('], cleanup: ['removeEventListener', 'easySDK.disconnect()', 'easySDK.dispose()'], bounds: ['Duration(seconds: 20)', '.timeout('] },
+  { key: 'javascript', install: `npm install --save-exact easyjssdk@${easySdkReleases.javascript.version}`, api: ['WKIM.init', 'im.on', 'im.connect()', 'im.send('], cleanup: ['im.off', 'im.destroy()'], bounds: ['Promise.race', '10_000'] },
+  { key: 'rust', install: `wukong-easy-sdk = "=${easySdkReleases.rust.version}"`, api: ['client.subscribe()', 'client.connect().await', 'client.send(', 'Event::Message'], cleanup: ['client.destroy().await', 'listener.abort()'], bounds: ['Backpressure', 'Lagged'] },
+  { key: 'csharp', install: `package WuKongEasySDK --version ${easySdkReleases.csharp.version} --source https://api.nuget.org/v3/index.json`, api: ['new WKIM', 'im.Message +=', 'im.ConnectAsync()', 'im.SendAsync('], cleanup: ['im.Message -=', 'await using', 'im.DisconnectAsync()'], bounds: ['TimeSpan.FromSeconds(10)', 'WKIMBackpressureException'] },
+  { key: 'cpp', install: `find_package(WuKongEasySDK ${easySdkReleases.cpp.cmakeVersion} CONFIG REQUIRED)`, api: ['im.on(', 'im.connect().get()', 'im.send('], cleanup: ['im.off(', 'im.destroy().get()'], bounds: ['ErrorCode::QueueFull', 'std::chrono::seconds(15)'] },
+  { key: 'python', install: `"wukong-easy-sdk==${easySdkReleases.python.version}"`, api: ['WKIM.init', 'im.on(', 'async with im:', 'await im.send('], cleanup: ['im.off(', 'destroy()'], bounds: ['ErrorCode.QUEUE_FULL', 'client_msg_no'] },
 ];
 const taskNames = {
   zh: ['准备接入', '安装 SDK', '连接与监听', '收发第一条消息', '清理连接', '常见问题'],
@@ -46,7 +47,7 @@ describe('EasySDK first-message reader contract', () => {
       }
       expect(overview).toContain('JSON-RPC CONNECT');
       expect(overview).toContain('Payload');
-      for (const token of ['/readyz', 'device_flag', '10.0.2.2', 'git checkout v2.0.5']) expect(examples).toContain(token);
+      for (const token of ['/readyz', 'device_flag', '10.0.2.2', `git checkout v${easySdkReleases.javascript.version}`]) expect(examples).toContain(token);
       expect(examples).not.toContain('gh workflow run');
       expect(examples).not.toContain('git checkout 5676700');
     });

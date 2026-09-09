@@ -50,7 +50,7 @@ iOS、Android、Flutter 默认 APP `0`，Web 默认 WEB `1`，Rust、C#、C++、
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-iOS.git
 cd WuKongEasySDK-iOS
-git checkout v1.1.1
+git checkout WK_EASYSDK_IOS_SOURCE_REF
 swift build -c release
 cd Examples/WuKongIMExample-Unified
 ./build.sh macos
@@ -72,7 +72,7 @@ cd Examples/WuKongIMExample-Unified
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-Android.git
 cd WuKongEasySDK-Android
-git checkout v1.0.5
+git checkout WK_EASYSDK_ANDROID_SOURCE_REF
 ./gradlew :example:assembleDebug
 ./gradlew :example:installDebug
 ```
@@ -86,7 +86,7 @@ git checkout v1.0.5
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-Flutter.git
 cd WuKongEasySDK-Flutter
-git checkout v1.1.0
+git checkout WK_EASYSDK_FLUTTER_SOURCE_REF
 flutter pub get
 cd example
 flutter pub get
@@ -103,7 +103,7 @@ flutter run -d <device-id>
 ```bash
 git clone https://github.com/WuKongIM/WuKongEasySDK-JS.git
 cd WuKongEasySDK-JS
-git checkout v2.0.5
+git checkout WK_EASYSDK_JAVASCRIPT_SOURCE_REF
 npm ci
 npm run build
 python3 -m http.server 8080
@@ -115,10 +115,10 @@ python3 -m http.server 8080
 
 ### Rust [#rust]
 
-需要 Rust 1.86+。检出与 crates.io 0.1.0 对应的源码：
+需要 Rust 1.86+。检出与 crates.io WK_EASYSDK_RUST_VERSION 对应的源码：
 
 ```bash
-git clone --branch v0.1.0 --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Rust.git
+git clone --branch WK_EASYSDK_RUST_TAG --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Rust.git
 cd WuKongEasySDK-Rust
 cargo build --locked --example chat
 ```
@@ -129,7 +129,7 @@ cargo build --locked --example chat
 
 ### C# [#csharp]
 
-用 [C# 快速接入](/zh/sdk/easy/csharp/getting-started) 的完整 `Program.cs` 创建 `MyChat`，安装公共 NuGet 1.0.0。两个终端分别设置 `WUKONGIM_WS_URL`、`WUKONGIM_UID`、`WUKONGIM_TOKEN`：
+用 [C# 快速接入](/zh/sdk/easy/csharp/getting-started) 的完整 `Program.cs` 创建 `MyChat`，安装公共 NuGet WK_EASYSDK_CSHARP_VERSION。两个终端分别设置 `WUKONGIM_WS_URL`、`WUKONGIM_UID`、`WUKONGIM_TOKEN`：
 
 ```bash
 # Alice
@@ -155,8 +155,8 @@ dotnet run --project MyChat -- alice
 在 Python 3.11+ 虚拟环境中运行：
 
 ```bash
-python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==0.1.0"
-git clone --branch v0.1.0 --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
+python -m pip install --index-url https://pypi.org/simple "wukong-easy-sdk==WK_EASYSDK_PYTHON_VERSION"
+git clone --branch WK_EASYSDK_PYTHON_TAG --depth 1 https://github.com/WuKongIM/WuKongEasySDK-Python.git
 python WuKongEasySDK-Python/examples/chat.py
 ```
 

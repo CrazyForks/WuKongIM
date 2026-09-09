@@ -7,8 +7,7 @@ summary: Owns the bilingual static v3 documentation site, shared navigation, pub
 
 ## Responsibility
 
-`docs-site` owns the bilingual Fumadocs v3 site, navigation, references, runnable
-examples, search, SEO, and machine-readable output. Runtime contracts are defined elsewhere.
+`docs-site` owns bilingual navigation, references, examples, search, SEO and machine-readable output. Runtime contracts are defined elsewhere.
 
 ## Boundaries
 
@@ -46,6 +45,11 @@ examples, search, SEO, and machine-readable output. Runtime contracts are define
    validation history linked from each tutorial; they never imply that a newer
    tutorial version passed an older matrix. Public pages retain actionable
    compatibility, lifecycle, and server limitations.
+   `lib/easy-sdk-releases.json` owns current versions and independent source/vcpkg pins.
+   Navigation reads it directly; `lib/easy-sdk-version.ts` resolves MDX tokens in prose,
+   code, links and literal attributes before HTML, search and Markdown generation.
+   Historical evidence stays literal. The hourly `easy-sdk-web-docs-sync.yml` Web pilot
+   verifies released npm tutorials in Chromium and proposes a bounded PR; other SDKs remain manual.
 5. Removed SDK pages exist only as redirects. UniApp migration lives under the
    JavaScript advanced section; there is no standalone UniApp documentation
    group.
@@ -64,12 +68,9 @@ examples, search, SEO, and machine-readable output. Runtime contracts are define
 ## Invariants and Failure Semantics
 
 - Chinese and English share one menu; publication requires both locale variants.
-- Product facts preserve cluster-only and 256-hash-slot semantics, durable
-  commit versus downstream effects, and current security boundaries.
-- Full SDK examples pin exact released versions in Java, Objective-C,
-  TypeScript, Dart, and ArkTS, explaining core terms before relying on them.
-- A trusted backend supplies identity, tokens, routing, history, Channel metadata,
-  and media URLs. Untrusted clients never call Product HTTP management directly.
+- Product facts preserve cluster-only and 256-hash-slot semantics, durable commit versus downstream effects, and current security boundaries.
+- Full SDK examples pin exact released versions in Java, Objective-C, TypeScript, Dart, and ArkTS, explaining core terms first.
+- A trusted backend supplies identity, tokens, routing, history, Channel metadata and media URLs. Untrusted clients never call Product HTTP management directly.
 - The JavaScript browser gate uses BFF-issued credentials with Token auth enabled;
   its pinned Playwright runner verifies online exchange and offline recovery.
 - The JavaScript example is a development aid; actual devices, networks, and releases need testing.
@@ -93,8 +94,7 @@ examples, search, SEO, and machine-readable output. Runtime contracts are define
   literal evidence.
 
 ## Read First
-- [SDK specification](SDK_DOCUMENTATION_SPEC.md), [navigation](lib/navigation.ts), and [developer contracts](lib/developer-contracts.ts)
-- [Phase 18 API specification](PHASE_18_SPEC.md) and [OpenAPI generator](scripts/generate-openapi.ts)
+- [SDK specification](SDK_DOCUMENTATION_SPEC.md), [navigation](lib/navigation.ts), [developer contracts](lib/developer-contracts.ts), [Phase 18 API specification](PHASE_18_SPEC.md), and [OpenAPI generator](scripts/generate-openapi.ts)
 
 ## Update Triggers
 Update this file when publication ownership, SDK learning order, locale parity, generated outputs, authoritative sources, or the hosting boundary changes.

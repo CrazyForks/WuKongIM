@@ -1,9 +1,9 @@
 ---
 title: Flutter 快速接入
-description: 安装固定版本 1.1.0，通过业务后端提供的连接材料完成在线双向收发和退出清理。
+description: 安装固定版本 SDK，通过业务后端提供的连接材料完成在线双向收发和退出清理。
 ---
 
-本教程使用 **1.1.0**，让 Alice 与 Bob 在两个独立客户端中在线收发。连接由 WebSocket JSON-RPC CONNECT 完成鉴权。
+本教程使用 **WK_EASYSDK_FLUTTER_VERSION**，让 Alice 与 Bob 在两个独立客户端中在线收发。连接由 WebSocket JSON-RPC CONNECT 完成鉴权。
 
 ## 1. 准备接入
 
@@ -28,7 +28,7 @@ description: 安装固定版本 1.1.0，通过业务后端提供的连接材料�
 dependencies:
   flutter:
     sdk: flutter
-  wukong_easy_sdk: 1.1.0
+  wukong_easy_sdk: WK_EASYSDK_FLUTTER_VERSION
 ```
 
 然后执行：
@@ -237,7 +237,7 @@ Future<void> sendText(String targetUid, String text) async {
 
 - **初始化或切换 UID 后状态异常**：等待 `easySDK.init(config)` 完成后再连接；切换账号前先移除监听、断开并 `dispose`，同时清空产品本地状态。
 - **Widget 重建后重复收消息**：不要在 `build` 中注册监听器；保存回调引用并在 `dispose` 移除。
-- **系统日志仍出现 Token 或 Payload**：先确认锁文件实际解析到 `wukong_easy_sdk 1.1.0`，并检查应用回调、`debugPrint`、自定义 `logHandler` 与采集器是否记录了完整事件或模型；SDK 诊断默认关闭，显式开启时也只应输出脱敏运行元数据。用 Release 产物复现并保留低敏证据后再提交问题。
+- **系统日志仍出现 Token 或 Payload**：先确认锁文件实际解析到 `wukong_easy_sdk WK_EASYSDK_FLUTTER_VERSION`，并检查应用回调、`debugPrint`、自定义 `logHandler` 与采集器是否记录了完整事件或模型；SDK 诊断默认关闭，显式开启时也只应输出脱敏运行元数据。用 Release 产物复现并保留低敏证据后再提交问题。
 - **`message.payload` 是一段字符串**：当前服务端对有效 JSON 对象输出对象；若仍收到字符串，先确认服务端 revision，再尝试按 Base64 → UTF-8 JSON 解码，未知格式保留原值并降级展示。
 - **真机连不上本地地址**：`localhost` 指向真机自身，让业务后端返回设备可达的 WSS 地址。
 - **发送成功但 UI 没有对方消息**：把发送结果、实时接收和离线恢复分开检查。

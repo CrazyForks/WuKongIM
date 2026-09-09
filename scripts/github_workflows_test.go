@@ -12,6 +12,7 @@ import (
 )
 
 var workflowCatalog = map[string]string{
+	"easy-sdk-web-docs-sync.yml":               "Safety Automation - Propose Web EasySDK Documentation Upgrade",
 	"binary-release-publish.yml":               "Safety Automation - Publish WuKongIM Binaries",
 	"chat-lifecycle-rehearsal.yml":             "Agent Tool - Start Chat Lifecycle Rehearsal",
 	"chat-lifecycle-rehearsal-finalize.yml":    "Safety Automation - Finalize Chat Lifecycle Rehearsals",

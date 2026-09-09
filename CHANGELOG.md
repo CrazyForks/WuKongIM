@@ -6,6 +6,8 @@ move those entries into a version section named for that exact tag.
 
 ## [Unreleased]
 
+## [v3.0.0-beta.13] - 2026-09-09
+
 ### 🔧 Improvements / 改进
 
 - Add immutable DATA-FORMAT.json identity to fresh v3 node directories and migration outputs, reject unsupported formats before startup, and expose read-only `wkcli db info`; existing unmarked directories remain unregistered. / 全新 v3 节点目录和迁移产物增加不可变 DATA-FORMAT.json 版本标识，启动前拒绝不支持的格式，并提供只读 wkcli db info；已有无标识目录保持未登记。
@@ -17,6 +19,10 @@ move those entries into a version section named for that exact tag.
 ### 📚 Documentation / 文档
 
 - Simplify the bilingual v2 → v3 migration guide into four steps, with explicit multi-server file collection and distribution and expandable troubleshooting and data policies; use 12 logical Slots and explain source revision compatibility. / 将中英文 v2 → v3 迁移指南精简为四步，明确多服务器冷备汇总与目标分发，排障和数据策略按需展开，计划示例采用 12 个逻辑 Slot 并说明来源提交字段的兼容写法。
+
+- Automatically check compatible Web EasySDK npm releases, verify the bilingual tutorial in Chromium, and propose reviewed documentation upgrades. / 自动检查兼容的 Web EasySDK npm 新版本，在 Chromium 验证中英文教程后创建文档升级 PR，交由维护者审核。
+
+- Keep EasySDK tutorial versions and installation pins in one shared manifest so compatible upgrades synchronize bilingual instructions and download links. / EasySDK 教程版本及安装引用集中到统一清单，兼容升级可同步中英文安装说明和下载链接。
 
 - Document released wkcli installation, paired server/CLI version checks, and installed-command examples in both languages; complete the migration tool navigation. / 补齐中英文 wkcli 发布版安装、服务端与工具版本核对、已安装命令示例及迁移工具导航。
 
