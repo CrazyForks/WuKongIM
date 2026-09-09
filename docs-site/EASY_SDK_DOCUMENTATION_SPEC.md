@@ -35,8 +35,9 @@ Update a selection only after checking the released package against its tutorial
 including installation, APIs, cleanup, platform requirements and known limits.
 Compatible releases need only a manifest edit. C++ registry, tool, CMake and
 source pins must be reviewed independently. This manifest does not attest that a
-new package passed an older live matrix, and this phase does not auto-discover or
-auto-publish SDK releases. See the README for the maintenance workflow.
+new package passed an older live matrix. The Web pilot discovers compatible npm
+releases, verifies the literal tutorial in Chromium and proposes a human-reviewed
+PR; other platforms remain manual. See the README for the maintenance workflow.
 
 Check examples against their released package or pinned source. Source examples
 are not package-consumer verification. Web 2.0.5 includes the handshake-failure

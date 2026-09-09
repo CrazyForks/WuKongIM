@@ -7,6 +7,10 @@
   reads the manifest directly. SDK source, vcpkg registry and tool pins are
   independent. Historical evidence and fix-introduction versions remain literal;
   changing a selection never certifies an older live matrix against a newer SDK.
+  The hourly Web pilot authenticates npm/tag/publication identity, runs the literal
+  tutorial in Chromium on a 256-hash-slot single-node cluster, and verifies docs
+  before proposing a three-file PR. Closed proposals suppress same-version retries;
+  only the main-branch proposal job can write, and it never merges PRs.
 
 - Durable Channel replication excludes learners from quorum votes and recovery voting. Authority installation copies its quorum-proved committed frontier to non-ISR replicas through the fixed repair workers, one bounded page per turn; the repair ledger allows the configured voter count plus one replacement replica and fences cursors to exact work generations. Migration probes refresh loaded follower frontiers from consistent exact storage because quorum exchanges bypass follower reactor state. A replica-replacement target below `CutoverLEO` remains runnable; invalid runtime proofs still block promotion.
 

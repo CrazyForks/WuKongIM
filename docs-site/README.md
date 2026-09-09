@@ -63,8 +63,11 @@ runs its fast unit tests from the documentation-site root and is part of `verify
   navigation is not edited by hand. Unknown tokens and unresolved output fail
   verification. API, lifecycle, platform or installation changes still require
   corresponding tutorial changes. Historical reports, fix-introduction versions
-  and server commits remain literal evidence. SDK release discovery, package
-  validation and cross-repository publication are not automated by this manifest.
+  and server commits remain literal evidence. The Web SDK pilot discovers npm
+  releases, verifies the tutorial and proposes a PR through
+  [`easy-sdk-web-docs-sync.yml`](../.github/workflows/easy-sdk-web-docs-sync.yml);
+  see the [maintenance runbook](scripts/easy-sdk-sync/README.md). Other platforms
+  still require manual package validation and selection.
 - `redirects.json` records public route migrations. Removed pages must not be
   retained as duplicate MDX content.
 - `NAVIGATION.md` is generated. Refresh it with `bun run navigation:write`.
