@@ -59,7 +59,8 @@ as part of the same release task:
 6. Wait for the entire publisher, including public clean-client verification,
    to succeed. It signs APT and RPM separately, seals one immutable audit
    snapshot, deploys the complete repository, and verifies target-version
-   downloads on Ubuntu, Debian, Rocky Linux, and AlmaLinux.
+   downloads on Ubuntu, Debian, Rocky Linux, and AlmaLinux. New-release
+   publication also requires installed CLI acceptance on all four distributions.
 
 Never copy signing credentials into the source repository or bypass signed
 metadata verification. Recover only the exact matching draft or immutable
@@ -86,8 +87,26 @@ sudo apt install -y wukongim
 For releases containing the unified operator CLI, each clean native client
 also checks that `wkcli version --output json` matches
 `wukongim version --output json` in version, full commit, and build source.
-Verify `wkcli bench --help`, `wkcli db --help`, and `wkcli migrate --help`
-from the installed package. Official Linux/macOS archives contain both binaries.
+Both identities must also match the reviewed snapshot's exact source SHA and
+version, with build source `release`; two equally wrong binaries cannot pass.
+The public package validator's `--verify-installed-cli` gate installs only
+snapshot-verified downloads in separate credential-free containers. In addition
+to help commands, it runs `bench validate`, queries a known synthetic offline
+user, and completes `migrate diagnose` on a fixed stopped-v2 fixture. Invalid
+inputs must fail, source bytes must remain unchanged, and diagnosis must not
+create a target. Every command and container has a bounded deadline.
+
+All four distributions must return `installed_cli_verified=true` with per-client
+functional receipts. Any failure keeps release delivery incomplete, even after
+Pages deployment. Signing and pre-publication download-only sandboxes never
+execute product payloads. Official Linux/macOS archives contain both binaries.
+
+To repeat this gate for the currently reviewed public snapshot without signing
+or publishing, dispatch `native-package-cli-acceptance.yml` in `WuKongIM/packages`
+from `main`, setting `expected_control_sha` to its exact current protected SHA.
+The workflow derives the audit and version from reviewed control, validates the
+immutable archive and public identities, and retains receipts for 90 days. Do
+not advance package main or run a competing publication while it executes.
 
 The repository bootstrap keyring has its own version. It is not the server
 version. Package upgrades do not restart the running server; service restart

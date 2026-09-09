@@ -184,6 +184,12 @@ applies separate protected APT and RPM signatures, seals the complete snapshot
 and receipt in an immutable audit Release, and only then deploys the `preview`
 APT suite and EL9 RPM repository to GitHub Pages. Every deployed snapshot is
 download-validated on clean Ubuntu, Debian, Rocky Linux, and AlmaLinux clients.
+New-release publication then requires installed `wkcli` functional acceptance
+in separate credential-free containers on those four distributions. Exact
+snapshot identities, valid and invalid offline command behavior, and unchanged
+fixture data must all pass; a deployed snapshot alone is not release completion.
+The package repository's `native-package-cli-acceptance.yml` can repeat this
+public check without signing or deployment, using its exact current control SHA.
 Both repositories enforce immutable Releases, and the custom-domain DNS and
 certificate are provisioned. Exact unsigned source package assets still come
 only from the tag-bound binary Release described below; this credential-free

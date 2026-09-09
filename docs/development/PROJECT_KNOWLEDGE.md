@@ -217,6 +217,13 @@
   cluster runtime, the multi-reactor channel runtime, and the new business
   kernel are canonical under `pkg/controller`, `pkg/cluster`, `pkg/channel`,
   and `internal`; the former v1 server runtime tree has been removed.
+- New signed native releases require the package repository's installed CLI
+  acceptance gate on all four public-client distributions. Snapshot-bound
+  version/commit/build source, offline benchmark planning, a known-user query,
+  migration diagnosis, negative inputs and unchanged source data must pass.
+  Product binaries run only in separate credential-free installation containers,
+  never in signing or download-only sandboxes. The read-only repeat workflow is
+  `native-package-cli-acceptance.yml`; see `RELEASING.md` for its exact control fence.
 - Release completion includes the signed native package channel and public
   exact-version APT/RPM client verification, as required by
   `docs/development/RELEASING.md`. Tag-triggered Docker, binary, and docs
