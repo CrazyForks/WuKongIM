@@ -6,7 +6,7 @@ description: 在受控集群上执行黑盒验证、真实负载、容量搜索�
 `wkcli bench` 是 WuKongIM 的黑盒基准驱动器。它通过公开 HTTP、Benchmark HTTP 和 WKProto 网关与运行中的集群交互，不导入服务端内部包，也不绕过集群语义。单节点目标仍然是单节点集群。
 
 <Callout type="error" title="不要把生产集群当作压测目标">
-  wkbench 会创建真实用户、频道、连接和消息，并可能把目标推入背压或不可用状态。只能使用隔离、可重建、已授权的压测集群，并为速率、并发、持续时间、磁盘和停止条件设置硬上限。
+  `wkcli bench` 会创建真实用户、频道、连接和消息，并可能把目标推入背压或不可用状态。只能使用隔离、可重建、已授权的压测集群，并为速率、并发、持续时间、磁盘和停止条件设置硬上限。
 </Callout>
 
 ## 命令范围
@@ -47,11 +47,14 @@ api_enable = true
 
 配套下载：[target.yaml](/examples/wkbench/target.yaml)、[workers.yaml](/examples/wkbench/workers.yaml)、[scenario.yaml](/examples/wkbench/scenario.yaml)。这是 20 个在线用户、2 个各 10 人的群、每群 5 条/秒的冒烟验证；测量 60 秒，另有 10 秒预热和 10 秒冷却，不代表生产容量。
 
-以下命令在仓库根目录执行，需要符合 `go.mod` 要求的 Go。已安装 `wkcli bench` 二进制时，可以把 `go run ./cmd/wkcli bench` 换为 `wkcli bench`。先复制配置：
+先[安装 wkcli](/zh/server/tools/wkcli)。以下命令使用已安装的程序，无需源码仓库或 Go。在工作目录下载配置：
 
 ```bash
 mkdir -p ./tmp/docs-wkbench
-cp docs-site/public/examples/wkbench/*.yaml ./tmp/docs-wkbench/
+for file in target workers scenario; do
+  curl --fail --location "https://docs.githubim.com/examples/wkbench/${file}.yaml" \
+    --output "./tmp/docs-wkbench/${file}.yaml"
+done
 ```
 
 在 `target.yaml` 中填写隔离测试集群的 API、Gateway 和指标地址。示例默认测试节点、Worker 和协调器都在同一主机；分开部署时，每个地址都必须能从对应进程访问。
@@ -62,7 +65,7 @@ cp docs-site/public/examples/wkbench/*.yaml ./tmp/docs-wkbench/
 
 ```bash
 export WK_BENCH_WORKER_TOKEN='replace-with-test-worker-secret'
-go run ./cmd/wkcli bench worker \
+wkcli bench worker \
   --listen 127.0.0.1:19090 \
   --work-dir ./tmp/docs-wkbench/worker
 ```
@@ -73,7 +76,7 @@ go run ./cmd/wkcli bench worker \
 export WK_BENCH_WORKER_TOKEN='replace-with-test-worker-secret'
 export WK_BENCH_API_TOKEN='replace-with-test-api-secret'
 export WK_BENCH_RUN_ID="docs-smoke-$(date -u +%Y%m%dT%H%M%SZ)"
-go run ./cmd/wkcli bench validate \
+wkcli bench validate \
   --target ./tmp/docs-wkbench/target.yaml \
   --workers ./tmp/docs-wkbench/workers.yaml \
   --scenario ./tmp/docs-wkbench/scenario.yaml
@@ -82,7 +85,7 @@ go run ./cmd/wkcli bench validate \
 `validate` 不访问网络。成功后执行预检；预检失败就修正目标、Token 或地址，不继续运行负载：
 
 ```bash
-go run ./cmd/wkcli bench doctor \
+wkcli bench doctor \
   --target ./tmp/docs-wkbench/target.yaml \
   --workers ./tmp/docs-wkbench/workers.yaml \
   --scenario ./tmp/docs-wkbench/scenario.yaml
@@ -91,7 +94,7 @@ go run ./cmd/wkcli bench doctor \
 预检通过，再执行有界负载：
 
 ```bash
-go run ./cmd/wkcli bench run \
+wkcli bench run \
   --target ./tmp/docs-wkbench/target.yaml \
   --workers ./tmp/docs-wkbench/workers.yaml \
   --scenario ./tmp/docs-wkbench/scenario.yaml

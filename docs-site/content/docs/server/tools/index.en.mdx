@@ -16,6 +16,7 @@ WuKongIM provides one operator binary, `wkcli`, with command families for each t
 | Inspect live nodes, Top, or dynamic-node state | [wkcli](/en/server/tools/wkcli) | Most inspection is read-only; node-lifecycle subcommands call controlled Manager write APIs | Direct Controller/Slot editing or process management |
 | Query, export, or compare node-local storage | [wkcli db](/en/server/tools/wkdb) | Offline and read-mostly; only `import` writes the target store | Online cluster queries, global snapshots, or automatic migration |
 | Validate protocol traffic, a capacity hypothesis, or a regression gate | [wkcli bench](/en/server/tools/wkbench) | Generates real connections, channels, users, and messages | Unbounded production load or universal capacity numbers |
+| Migrate stopped original v2 backups to a new v3 cluster | [wkcli migrate](/en/server/operations/v2-to-v3-migration) | Reads cold backups and writes new offline target directories | In-place upgrades or online incremental replication |
 | Correlate logs, metrics, Top, diagnostics, and pprof | [Diagnostics](/en/server/tools/diagnostics) | Read-only by default; pprof is a bounded active observation | Automatic repair, arbitrary commands, or arbitrary queries |
 
 ## Common workflow
@@ -27,13 +28,20 @@ WuKongIM provides one operator binary, `wkcli`, with command families for each t
 5. **Retain context**: keep the command, time range, exit code, and redacted output, not only the final summary.
 6. **Remove temporary capability**: disable Debug, Benchmark, temporary credentials, simulators, and extra sampling, then confirm resources return to baseline.
 
+## Obtain wkcli
+
+Since v3.0.0-beta.12, the official archives and Linux native packages include `wkcli` alongside the server. Start with [installation and version checks](/en/server/tools/wkcli). All examples use this one executable; you do not need separate benchmark, database, or migration binaries.
+
 ## Build from source
 
 Build the required binary from a reviewed repository revision:
 
 ```bash
 go build -o ./bin/wkcli ./cmd/wkcli
+./bin/wkcli --help
 ```
+
+For source development, replace `wkcli` in examples with `./bin/wkcli` or `go run ./cmd/wkcli` from the repository root. The latter requires the Go version in `go.mod`.
 
 Record a traceable version for both tool and target server. Do not use a development-branch tool against production or assume offline formats, Manager APIs, or benchmark protocols are compatible across unknown versions.
 

@@ -32,7 +32,7 @@ description: 在日志、指标、Top、Manager、保留诊断、pprof 和 Opera
 5. 保存查询、游标、采样间隔与缺失区间。
 
 ```bash
-go run ./cmd/wkcli top --server http://127.0.0.1:5001 --once --json
+wkcli top --server http://127.0.0.1:5001 --once --json
 ```
 
 监控缺失本身就是未知状态。不要把空图、零序列或没有日志命中解释为健康。

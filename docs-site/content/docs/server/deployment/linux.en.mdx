@@ -27,10 +27,11 @@ sudo dnf -y --disablerepo='*' --enablerepo=wukongim-preview makecache --refresh
 sudo dnf install -y wukongim
 ```
 
-Check the installed version:
+The same package installs the server and the unified operator CLI. Their `version`, `commit`, and `build_source` fields must match. See [wkcli](/en/server/tools/wkcli) for command usage. If `wkcli` is missing or its identity differs, check `command -v wkcli` for an older binary on `PATH` and update to the matching package.
 
 ```bash
-wukongim version
+wukongim version --output json
+wkcli version --output json
 ```
 
 The package creates the service account, systemd service, `/etc/wukongim`, `/var/lib/wukongim`, and `/var/log/wukongim`. It does not create a configuration or start the service.

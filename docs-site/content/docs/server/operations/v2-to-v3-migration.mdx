@@ -42,7 +42,7 @@ sha256sum /srv/tools/wkcli /srv/tools/wukongim-v3 > /srv/wkmigrate/reports/binar
 /srv/tools/wkcli migrate --help
 ```
 
-macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平台。使用交付包时，先与独立交付记录比对压缩包摘要，再校验包内文件；统一 CLI 的版本会在官方归档和原生安装包中同时提供 `wkcli` 与 `wukongim`；可用 `wkcli version --output json` 核对版本。
+macOS 可用 `shasum -a 256` 代替 `sha256sum`。构建应面向实际运行平台。使用交付包时，先与独立交付记录比对压缩包摘要，再校验包内文件；从 v3.0.0-beta.12 起，官方归档和原生安装包均提供两个程序，获取方式见 [wkcli 安装](/zh/server/tools/wkcli)。迁移前比较 `wkcli version --output json` 与 `wukongim version --output json`，确认版本、提交和构建来源一致。
 
 ## 2. 固定迁移计划
 

@@ -32,7 +32,7 @@ Use the same time range and node identity across all three:
 5. Retain the query, cursor, sampling interval, and missing intervals.
 
 ```bash
-go run ./cmd/wkcli top --server http://127.0.0.1:5001 --once --json
+wkcli top --server http://127.0.0.1:5001 --once --json
 ```
 
 Missing monitoring is itself unknown state. Never interpret an empty graph, zero series, or no log hit as healthy.

@@ -3,7 +3,21 @@ title: wkcli
 description: Use one operator binary for live operations, benchmarks, offline database transfer, and v2-to-v3 migration.
 ---
 
-`wkcli` is WuKongIM's unified operator CLI. Online operations use HTTP and WKProto entry points; `db` and `migrate` operate on offline data. Official binary archives and native packages containing this CLI provide it alongside the same-version `wukongim`. Check `wkcli version --output json` to identify the build.
+`wkcli` is WuKongIM's unified operator CLI. Online operations use HTTP and WKProto entry points; `db` and `migrate` operate on offline data. Since **v3.0.0-beta.12**, official Linux/macOS archives and Linux native packages include both `wkcli` and `wukongim` from the same release.
+
+## Install and verify
+
+On Linux amd64, follow [Linux deployment](/en/server/deployment/linux) to install the `wukongim` package through APT or DNF; it also installs `wkcli`. For Linux arm64 or macOS, download the matching OS and architecture archive from [GitHub Releases](https://github.com/WuKongIM/WuKongIM/releases), verify it against the release checksum file, and extract both binaries. The current documentation release is `WK_CURRENT_RELEASE_TAG`. Add the extracted directory to `PATH`, or use `./wkcli` and `./wukongim` there.
+
+```bash
+wukongim version --output json
+wkcli version --output json
+wkcli bench --help
+wkcli db --help
+wkcli migrate --help
+```
+
+For the paired release binaries, `version`, `commit`, and `build_source` must match. These commands need no running server and do not start a benchmark or migration. The examples below assume `wkcli` is on `PATH`; see [Tools](/en/server/tools) for source builds.
 
 ## Command boundaries
 
@@ -26,15 +40,15 @@ Replace old invocations `wkbench …`, `wkdb …`, and `wkmigrate …` with `wkc
 ## Configure named contexts
 
 ```bash
-go run ./cmd/wkcli context add dev \
+wkcli context add dev \
   --server http://127.0.0.1:5001 \
   --server http://127.0.0.1:5002 \
   --description "development cluster" \
   --select
 
-go run ./cmd/wkcli context ls
-go run ./cmd/wkcli context show
-go run ./cmd/wkcli context current
+wkcli context ls
+wkcli context show
+wkcli context current
 ```
 
 `--server` may be repeated or comma-separated, and every address must be an absolute `http://` or `https://` API URL. A context stores target addresses; selecting a context named production does not grant operational approval. Recheck cluster identity and credential scope before execution.
@@ -42,10 +56,10 @@ go run ./cmd/wkcli context current
 ## Use Top
 
 ```bash
-go run ./cmd/wkcli top --context dev --once
-go run ./cmd/wkcli top --context dev --once --json
-go run ./cmd/wkcli top --context dev --interval 2s --max-refresh 5
-go run ./cmd/wkcli top --context dev --alerts
+wkcli top --context dev --once
+wkcli top --context dev --once --json
+wkcli top --context dev --interval 2s --max-refresh 5
+wkcli top --context dev --alerts
 ```
 
 Top reads bounded node-local history and does not depend on Prometheus. It refreshes until interrupted by default; use `--once` or `--max-refresh` for scripts and incident evidence. Cross-check aggregates with `/readyz`, Manager, and Prometheus.
@@ -53,10 +67,10 @@ Top reads bounded node-local history and does not depend on Prometheus. It refre
 ## Read dynamic-node evidence
 
 ```bash
-go run ./cmd/wkcli node ls --context dev
-go run ./cmd/wkcli node diagnose 4 --context dev
-go run ./cmd/wkcli node diagnose 4 --context dev --json
-go run ./cmd/wkcli node scale-in status 4 --context dev
+wkcli node ls --context dev
+wkcli node diagnose 4 --context dev
+wkcli node diagnose 4 --context dev --json
+wkcli node scale-in status 4 --context dev
 ```
 
 Retain health freshness, control revision, `blocked_reasons`, `safe_to_remove`, gateway drain counters, and bounded task/audit/Slot evidence. Missing data stays unknown; never infer healthy from an empty value.
@@ -64,11 +78,11 @@ Retain health freshness, control revision, `blocked_reasons`, `safe_to_remove`, 
 ## Node mutations
 
 ```bash
-go run ./cmd/wkcli node activate 4 --context dev
-go run ./cmd/wkcli node onboarding start 4 --context dev --max-slot-moves 1
-go run ./cmd/wkcli node scale-in start 4 --context dev
-go run ./cmd/wkcli node scale-in drain 4 --context dev --draining=true
-go run ./cmd/wkcli node scale-in remove 4 --context dev
+wkcli node activate 4 --context dev
+wkcli node onboarding start 4 --context dev --max-slot-moves 1
+wkcli node scale-in start 4 --context dev
+wkcli node scale-in drain 4 --context dev --draining=true
+wkcli node scale-in remove 4 --context dev
 ```
 
 Run these only inside the explicit [Scaling](/en/server/operations/scaling) procedure. A dynamically joined node does not automatically receive Slot replicas or leaders, and Controller voter change is a separate explicit decision. Removal must wait for authoritative `safe_to_remove=true`; a CLI diagnostic recommendation does not replace that gate.
@@ -76,7 +90,7 @@ Run these only inside the explicit [Scaling](/en/server/operations/scaling) proc
 ## Lightweight send checks
 
 ```bash
-go run ./cmd/wkcli bench send \
+wkcli bench send \
   --gateway 127.0.0.1:5100 \
   --clients 8 \
   --msgs 1000 \
@@ -93,7 +107,7 @@ go run ./cmd/wkcli bench send \
 `sim` prepares group metadata through `/bench/v1/*`, keeps users online through the real WKProto gateway, and sends `SEND -> SENDACK` traffic. The target must explicitly enable the Benchmark API and advertise a reachable gateway.
 
 ```bash
-go run ./cmd/wkcli sim \
+wkcli sim \
   --server http://127.0.0.1:5001 \
   --users 100 \
   --groups 50 \

@@ -20,7 +20,7 @@ description: 从故障现象开始，用低风险检查逐步找到问题范围�
 ```bash
 curl -sS -i http://127.0.0.1:5001/healthz
 curl -sS -i http://127.0.0.1:5001/readyz
-go run ./cmd/wkcli top --server http://127.0.0.1:5001 --once --json
+wkcli top --server http://127.0.0.1:5001 --once --json
 ```
 
 把地址换成实际 API 地址。`0.0.0.0` 是监听配置，不是客户端可以访问的服务器地址。
@@ -57,8 +57,8 @@ go run ./cmd/wkcli top --server http://127.0.0.1:5001 --once --json
 ### Controller、Slot 或节点状态异常
 
 ```bash
-go run ./cmd/wkcli node ls --context production
-go run ./cmd/wkcli node diagnose 4 --context production --json
+wkcli node ls --context production
+wkcli node diagnose 4 --context production --json
 ```
 
 保存命令输出里的状态更新时间、控制版本、`blocked_reasons`、任务和 Slot 证据。诊断建议不是执行写操作的授权；移除节点仍必须等待 `safe_to_remove=true`。处理步骤见[扩容与缩容](/zh/server/operations/scaling)。
