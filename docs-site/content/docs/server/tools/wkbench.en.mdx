@@ -6,7 +6,7 @@ description: Run black-box validation, real workloads, capacity searches, and re
 `wkcli bench` is WuKongIM's black-box benchmark driver. It talks to a running cluster through public HTTP, Benchmark HTTP, and WKProto gateway endpoints without importing server internals or bypassing cluster semantics. A one-node target is still a single-node cluster.
 
 <Callout type="error" title="Do not use production as a load target">
-  wkbench creates real users, Channels, connections, and messages and may drive a target into backpressure or unavailability. Use only an isolated, rebuildable, authorized benchmark cluster, with hard limits for rate, concurrency, duration, disk, and stopping.
+  `wkcli bench` creates real users, Channels, connections, and messages and may drive a target into backpressure or unavailability. Use only an isolated, rebuildable, authorized benchmark cluster, with hard limits for rate, concurrency, duration, disk, and stopping.
 </Callout>
 
 ## Command scope
@@ -47,11 +47,14 @@ api_enable = true
 
 Download [target.yaml](/examples/wkbench/target.yaml), [workers.yaml](/examples/wkbench/workers.yaml), and [scenario.yaml](/examples/wkbench/scenario.yaml). This smoke workload has 20 online users and two 10-member groups sending 5 messages/second each. It measures 60 seconds, plus 10 seconds each for warmup and cooldown; it is not a production capacity claim.
 
-Run these commands from the repository root with the Go version required by `go.mod`. If you have an installed binary, replace `go run ./cmd/wkcli bench` with `wkcli bench`. Copy the configurations first:
+First [install wkcli](/en/server/tools/wkcli). The following commands use the installed binary and do not require a source checkout or Go. Download the configurations into a working directory:
 
 ```bash
 mkdir -p ./tmp/docs-wkbench
-cp docs-site/public/examples/wkbench/*.yaml ./tmp/docs-wkbench/
+for file in target workers scenario; do
+  curl --fail --location "https://docs.githubim.com/examples/wkbench/${file}.yaml" \
+    --output "./tmp/docs-wkbench/${file}.yaml"
+done
 ```
 
 Edit `target.yaml` with the isolated test cluster's API, Gateway, and metrics endpoints. Defaults assume the test node, worker, and coordinator share a host; for separate hosts, make every endpoint reachable from the process that uses it.
@@ -62,7 +65,7 @@ Terminal A, start the worker:
 
 ```bash
 export WK_BENCH_WORKER_TOKEN='replace-with-test-worker-secret'
-go run ./cmd/wkcli bench worker \
+wkcli bench worker \
   --listen 127.0.0.1:19090 \
   --work-dir ./tmp/docs-wkbench/worker
 ```
@@ -73,7 +76,7 @@ Terminal B, configure this run. Change `WK_BENCH_RUN_ID` for every run; do not r
 export WK_BENCH_WORKER_TOKEN='replace-with-test-worker-secret'
 export WK_BENCH_API_TOKEN='replace-with-test-api-secret'
 export WK_BENCH_RUN_ID="docs-smoke-$(date -u +%Y%m%dT%H%M%SZ)"
-go run ./cmd/wkcli bench validate \
+wkcli bench validate \
   --target ./tmp/docs-wkbench/target.yaml \
   --workers ./tmp/docs-wkbench/workers.yaml \
   --scenario ./tmp/docs-wkbench/scenario.yaml
@@ -82,7 +85,7 @@ go run ./cmd/wkcli bench validate \
 `validate` does not access the network. After it passes, run preflight. If preflight fails, fix the target, tokens, or endpoints before running traffic:
 
 ```bash
-go run ./cmd/wkcli bench doctor \
+wkcli bench doctor \
   --target ./tmp/docs-wkbench/target.yaml \
   --workers ./tmp/docs-wkbench/workers.yaml \
   --scenario ./tmp/docs-wkbench/scenario.yaml
@@ -91,7 +94,7 @@ go run ./cmd/wkcli bench doctor \
 Once preflight passes, execute the bounded workload:
 
 ```bash
-go run ./cmd/wkcli bench run \
+wkcli bench run \
   --target ./tmp/docs-wkbench/target.yaml \
   --workers ./tmp/docs-wkbench/workers.yaml \
   --scenario ./tmp/docs-wkbench/scenario.yaml

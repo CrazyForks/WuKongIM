@@ -16,6 +16,7 @@ WuKongIM 使用统一运维工具 `wkcli`，通过子命令区分操作目标：
 | 查看在线节点、Top、动态节点状态 | [wkcli](/zh/server/tools/wkcli) | 多数检查只读；节点生命周期子命令会调用受控 Manager 写 API | 直接编辑 Controller/Slot 状态或管理进程 |
 | 查询、导出或比较节点本地存储 | [wkcli db](/zh/server/tools/wkdb) | 离线只读为主；只有 `import` 写目标存储 | 在线集群查询、全局快照或自动迁移 |
 | 验证协议流量、容量假设和回归门槛 | [wkcli bench](/zh/server/tools/wkbench) | 产生真实连接、频道、用户和消息 | 无界生产压测或通用容量数字 |
+| 将原版 v2 停机备份迁入全新 v3 集群 | [wkcli migrate](/zh/server/operations/v2-to-v3-migration) | 读取冷备并写入全新离线目标目录 | 原地升级或在线增量同步 |
 | 关联日志、指标、Top、诊断事件与 pprof | [诊断能力](/zh/server/tools/diagnostics) | 默认只读；pprof 是有界的主动观察 | 自动修复、任意命令或任意查询 |
 
 ## 通用工作流
@@ -27,13 +28,20 @@ WuKongIM 使用统一运维工具 `wkcli`，通过子命令区分操作目标：
 5. **保存上下文**：保留命令、时间范围、退出码和脱敏输出；不要只复制最终摘要。
 6. **清理临时能力**：关闭 Debug、Benchmark、临时凭据、模拟器和额外采样，确认资源回到基线。
 
+## 获取 wkcli
+
+从 v3.0.0-beta.12 起，官方归档和 Linux 原生安装包随服务端提供 `wkcli`。先完成[安装与版本核对](/zh/server/tools/wkcli)，随后使用各子命令，无需分别安装压测、数据库和迁移工具。
+
 ## 从源码构建
 
 在已审核的仓库版本中构建需要的二进制：
 
 ```bash
 go build -o ./bin/wkcli ./cmd/wkcli
+./bin/wkcli --help
 ```
+
+源码开发时，可将示例中的 `wkcli` 替换为 `./bin/wkcli`，或在仓库根目录使用 `go run ./cmd/wkcli`；后者需要符合 `go.mod` 要求的 Go。
 
 工具与目标服务端应来自已记录、可追溯的版本。不要把开发分支工具直接用于生产，也不要假设未知版本之间的离线格式、Manager API 或 Benchmark 协议兼容。
 

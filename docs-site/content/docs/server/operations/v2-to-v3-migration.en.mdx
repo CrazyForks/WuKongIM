@@ -42,7 +42,7 @@ sha256sum /srv/tools/wkcli /srv/tools/wukongim-v3 > /srv/wkmigrate/reports/binar
 /srv/tools/wkcli migrate --help
 ```
 
-On macOS, use `shasum -a 256` instead of `sha256sum`. Build for the actual runtime platform. For a delivery package, compare its archive digest with an independent delivery record before checking the enclosed files. Releases containing the unified CLI include `wkcli` beside `wukongim` in official archives and native packages. Check `wkcli version --output json` against the server identity.
+On macOS, use `shasum -a 256` instead of `sha256sum`. Build for the actual runtime platform. For a delivery package, compare its archive digest with an independent delivery record before checking the enclosed files. Since v3.0.0-beta.12, official archives and native packages include both binaries; see [wkcli installation](/en/server/tools/wkcli). Compare `wkcli version --output json` with `wukongim version --output json`: version, commit, and build source must match before migration.
 
 ## 2. Freeze the migration plan
 

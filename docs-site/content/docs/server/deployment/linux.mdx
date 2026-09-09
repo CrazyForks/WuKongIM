@@ -27,10 +27,11 @@ sudo dnf -y --disablerepo='*' --enablerepo=wukongim-preview makecache --refresh
 sudo dnf install -y wukongim
 ```
 
-安装后检查版本：
+同一软件包会安装服务端和统一运维工具；两者的 `version`、`commit`、`build_source` 应一致。命令用法见 [wkcli](/zh/server/tools/wkcli)。若找不到 `wkcli` 或版本不一致，先用 `command -v wkcli` 排查 `PATH` 中的旧程序，再更新为配套的软件包。
 
 ```bash
-wukongim version
+wukongim version --output json
+wkcli version --output json
 ```
 
 软件包会创建服务账号、systemd 服务以及 `/etc/wukongim`、`/var/lib/wukongim` 和 `/var/log/wukongim`，但不会生成配置或启动服务。

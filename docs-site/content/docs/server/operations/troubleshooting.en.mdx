@@ -20,7 +20,7 @@ Troubleshooting does not mean restarting as soon as an error appears. First answ
 ```bash
 curl -sS -i http://127.0.0.1:5001/healthz
 curl -sS -i http://127.0.0.1:5001/readyz
-go run ./cmd/wkcli top --server http://127.0.0.1:5001 --once --json
+wkcli top --server http://127.0.0.1:5001 --once --json
 ```
 
 Replace the address with the real API address. `0.0.0.0` is a listen setting, not a server address that clients can use.
@@ -57,8 +57,8 @@ See [Message Flow](/en/server/architecture/message-flow) for the full path. With
 ### Controller, Slot, or node state is unhealthy
 
 ```bash
-go run ./cmd/wkcli node ls --context production
-go run ./cmd/wkcli node diagnose 4 --context production --json
+wkcli node ls --context production
+wkcli node diagnose 4 --context production --json
 ```
 
 Save state timestamps, control revision, `blocked_reasons`, tasks, and Slot evidence from the output. A diagnostic recommendation is not permission to perform a write. Node removal must still wait for `safe_to_remove=true`. Follow [Scaling](/en/server/operations/scaling) for the procedure.
