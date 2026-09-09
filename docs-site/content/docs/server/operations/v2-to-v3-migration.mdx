@@ -86,7 +86,7 @@ wukongim version --output json
   "target": {
     "cluster_id": "migration-v3-new",
     "created_at": "2026-09-09T00:00:00Z",
-    "slot_count": 256,
+    "slot_count": 12,
     "hash_slot_count": 256,
     "replicas": 3,
     "channel_replicas": 3,
@@ -99,7 +99,7 @@ wukongim version --output json
 }
 ```
 
-`source_commit` 是你提供的版本证据，不会自动识别旧二进制。`shard_count` 填原部署实际业务 DB 分片数；目标节点 ID 为 1–1023，副本数不能超过目标节点数。物理哈希槽固定为 256；逻辑 Slot 数由 `slot_count` 指定。
+`source_commit` 当前必填，必须等于示例中的提交 SHA（原版 `v2.2.5-20260422`）。省略或填写其他值会被拒绝；它是你提供的来源版本证据，不会自动识别旧二进制。`shard_count` 填原部署实际业务 DB 分片数；目标节点 ID 为 1–1023，副本数不能超过目标节点数。`slot_count` 是目标逻辑 Slot 数，示例采用 v3 默认的 `12`，须与启动配置 `cluster.initial_slot_count` 一致；迁移计划仍须显式填写，不会自动补默认值。`hash_slot_count` 是物理哈希槽数，固定为 `256`。
 
 源、工作空间、归档和各目标目录必须互不包含。目标 `data_dir` 必须尚不存在，稍后还要部署到对应服务器的相同绝对路径。
 
